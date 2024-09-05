@@ -1,5 +1,5 @@
 
-import { PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsString, IsOptional, IsNumber, IsNotEmpty } from 'class-validator';
 export class CreateTeamDto {
   @IsString()
@@ -13,13 +13,16 @@ export class CreateTeamDto {
   @IsNumber()
   idRespo: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  idLeader: number;
+  idLeader: number | null;
 }
 
 
 
 
 
-export class UpdateTeamDto extends PartialType(CreateTeamDto) {}
+// UpdateTeamDto that omits idRespo and idTeam fields
+export class UpdateTeamDto extends PartialType(
+  OmitType(CreateTeamDto, ['idRespo', 'idTeam'] as const)
+) {}

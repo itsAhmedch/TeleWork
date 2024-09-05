@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from './user.entity';
 import { Plan } from './plan.entity';
 
@@ -10,21 +18,24 @@ export class Team {
   @Column({ type: 'varchar', length: 30 })
   name: string;
 
-  @Column({ default:null })
-  idTeam: number | null;
 
+  
+  @ManyToOne(() => Team, (team) => team.childTeams, { onDelete: 'CASCADE', nullable: true })  // Set to nullable
+  @JoinColumn({ name: 'idTeam' })  
+  parentTeam: Team | null = null;  
+    
+  
+  @OneToMany(() => Team, (team) => team.parentTeam)
+  childTeams: Team[];
 
-  @ManyToOne(() => User, user => user.teams, { onDelete: 'SET NULL' }) // Set to SET NULL or other appropriate action
+  @ManyToOne(() => User, (user) => user.teams, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'idRespo' })
   responsable: User;
 
-  @OneToOne(() => User, user => user.leadTeam, { onDelete: 'SET NULL', eager: true })
+  @OneToOne(() => User, (user) => user.leadTeam, { onDelete: 'SET NULL', eager: true })
   @JoinColumn({ name: 'idLeader' })
-  leader: User;
+  leader: User | null;
 
-
-  @OneToMany(() => Plan, plan => plan.team)
-  plans: Plan[]; // Each team can have multiple plans, but we'll enforce a limit of 2 in the service
+  @OneToMany(() => Plan, (plan) => plan.team)
+  plans: Plan[];
 }
-
-

@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './../entities/user.entity';
-import { CreateUserDto ,UpdateUserDto} from '../dto/User.dto';
-
+import { CreateUserDto, UpdateUserDto } from '../dto/User.dto';
 
 @Injectable()
 export class UserService {
@@ -13,43 +16,70 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
-    return await this.userRepository.save(user);
+    try {
+      const user = this.userRepository.create(createUserDto);
+      return await this.userRepository.save(user);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
+    }
   }
 
   async findAll(): Promise<User[]> {
-    return await this.userRepository.find();
+    try {
+      return await this.userRepository.find();
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
+    }
   }
 
   async findOne(id: number): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`User not found`);
+    try {
+      const user = await this.userRepository.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException(`User not found`);
+      }
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
     }
-    return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<{"status":string}> {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<{ status: string }> {
+    try {
+      const existingUser = await this.userRepository.findOneBy({ id });
 
-    const existingUser = await this.userRepository.findOne({where:{ id:id }   });
-    
-    if (!existingUser) {
-      throw new NotFoundException(`User  not found`);
+      if (!existingUser) {
+        throw new NotFoundException(`User  not found`);
+      }
+
+      const updatedUser = this.userRepository.create({
+        ...existingUser,
+        ...updateUserDto,
+      });
+
+      await this.userRepository.save(updatedUser);
+      return { status: 'updated' };
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
     }
-  
-   
-    const updatedUser = this.userRepository.create({
-      ...existingUser,
-      ...updateUserDto,
-    });
-  
-    await this.userRepository.save(updatedUser);
-    return {"status":"updated"}
   }
-  
 
   async remove(id: number): Promise<void> {
-    const user = await this.findOne(id);
-    await this.userRepository.remove(user);
+    try {
+      const result = await this.userRepository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`Plan with ID ${id} not found`);
+      }
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error);
+    }
   }
 }

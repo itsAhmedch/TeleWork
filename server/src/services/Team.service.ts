@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Team } from './../entities/Team.entity';
@@ -14,92 +18,138 @@ export class TeamService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createTeamDto: CreateTeamDto): Promise<Team> {
-    const { idRespo, idLeader, ...teamData } = createTeamDto;
-
-    // Fetch the responsable user
-    const responsable = await this.userRepository.findOne({ where: { id: idRespo } });
-    if (!responsable) {
-      throw new NotFoundException(`User with ID ${idRespo} not found`);
-    }
-
-    // Fetch the leader user if provided
-    let leader: User | undefined;
-    if (idLeader) {
-      leader = await this.userRepository.findOne({ where: { id: idLeader } });
-      if (!leader) {
-        throw new NotFoundException(`User with ID ${idLeader} not found`);
-      }
-    }
-
-    // Create the team with fetched users
-    const team = this.teamRepository.create({
-      ...teamData,
-      responsable,
-      leader,
-    });
-
-    return this.teamRepository.save(team);
-  }
-
-  async findAll(): Promise<Team[]> {
-    return this.teamRepository.find({ relations: ['responsable', 'leader'] });
-  }
-
-  async findOne(id: number): Promise<Team> {
-    const team = await this.teamRepository.findOne({
-      where: { id },
+  // Create a new team with optional parent team
+  async create(
+    responsable: User,
+    leader: User | null,
+    parentTeam: Team | null,
+    teamData: Partial<Team>
+  ): Promise<Team> {
+    try {
+      // Create the new team
       
-    });
-    if (!team) {
-      throw new NotFoundException(`Team with ID ${id} not found`);
+      
+      const team = this.teamRepository.create({
+        ...teamData,
+        responsable,
+        leader,
+        parentTeam, // Set parent team if exists, null otherwise
+      });
+
+      console.log(team.parentTeam);
+      
+  
+      return this.teamRepository.save(team);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
     }
-    return team;
+  }
+  
+
+  
+
+  // Fetch all teams with relations
+  async findAll(): Promise<Team[]> {
+    try {
+      return this.teamRepository.find({
+        relations: ['responsable', 'leader', 'childTeams','parentTeam'], // Add childTeams relation
+      });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
+    }
   }
 
+  // Find a specific team by ID
+  async findOne(id: number): Promise<Team> {
+    try {
+      const team = await this.teamRepository.findOne({
+        where: { id },
+        relations: ['responsable', 'leader', 'childTeams', 'parentTeam'], // Add necessary relations
+      });
+      if (!team) {
+        throw new NotFoundException(`Team with ID ${id} not found`);
+      }
+      return team;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  // Find teams by responsable user ID
   async findByRespo(responsableId: number): Promise<Team[]> {
-    const teams = await this.teamRepository.find({
-      where: { responsable: { id: responsableId } },
-      relations: ['responsable', 'leader'],
-    });
-    if (!teams.length) {
-      throw new NotFoundException(`No teams found for responsable with ID ${responsableId}`);
+    try {
+      const teams = await this.teamRepository.findBy({
+        responsable: { id: responsableId },
+      });
+      if (!teams.length) {
+        throw new NotFoundException(
+          `No teams found for responsable with ID ${responsableId}`,
+        );
+      }
+      return teams;
+    } catch (error) {
+      
+      throw new BadRequestException(error.message);
     }
-    return teams;
   }
 
+  // Update a team by ID
   async update(id: number, updateTeamDto: UpdateTeamDto): Promise<Team> {
-    const team = await this.teamRepository.findOne({ where: { id }, relations: ['responsable', 'leader'] });
-    
-    if (!team) {
-      throw new NotFoundException(`Team with ID ${id} not found`);
-    }
+    try {
+      const team = await this.teamRepository.findOne({
+        where: { id },
+        relations: ['responsable', 'leader', 'parentTeam'],
+      });
 
-    // Handle the case where the responsable ID might be updated
-    if (updateTeamDto.idRespo) {
-      const responsable = await this.userRepository.findOne({ where: { id: updateTeamDto.idRespo } });
-      if (!responsable) {
-        throw new NotFoundException(`User with ID ${updateTeamDto.idRespo} not found`);
+      if (!team) {
+        throw new NotFoundException(`Team with ID ${id} not found`);
       }
-      team.responsable = responsable;
-    }
 
-    // Handle the case where the leader ID might be updated
-    if (updateTeamDto.idLeader) {
-      const leader = await this.userRepository.findOne({ where: { id: updateTeamDto.idLeader } });
-      if (!leader) {
-        throw new NotFoundException(`User with ID ${updateTeamDto.idLeader} not found`);
+     
+
+      // Handle updating leader
+      if (updateTeamDto.idLeader) {
+        const leader = await this.userRepository.findOneBy({
+          id: updateTeamDto.idLeader,
+          idTeam:id
+        });
+        if (!leader) {
+          throw new NotFoundException(`User with ID ${updateTeamDto.idLeader} not found in this team`);
+        }
+        team.leader = leader;
       }
-      team.leader = leader;
-    }
 
-    // Update the team with new data
-    const updatedTeam = this.teamRepository.merge(team, updateTeamDto);
-    return this.teamRepository.save(updatedTeam);
+     
+
+      // Update and save the team
+      const updatedTeam = this.teamRepository.merge(team, updateTeamDto);
+      return this.teamRepository.save(updatedTeam);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
+    }
   }
 
+  // Remove a team and cascade delete child teams
   async remove(id: number): Promise<void> {
-    const team = await this.findOne(id);
-    await this.teamRepository.remove(team);
+    try {
+      const team = await this.teamRepository.findOne({
+        where: { id },
+        relations: ['childTeams'],
+      });
+
+      if (!team) {
+        throw new NotFoundException(`Team with ID ${id} not found`);
+      }
+
+      // Remove the team, and child teams will be deleted due to CASCADE
+      await this.teamRepository.remove(team);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(error.message);
+    }
   }
 }

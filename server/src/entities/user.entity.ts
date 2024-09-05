@@ -1,7 +1,18 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
-import { Team } from './team.entity';  // Assuming the Team entity is in the same directory
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+  ManyToOne,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
+import { Team } from './team.entity'; // Assuming the Team entity is in the same directory
 import { DailyWork } from './DailyWork.entity';
 import { Plan } from './plan.entity';
+import * as bcrypt from 'bcrypt';
 
 @Entity('user')
 export class User {
@@ -26,22 +37,26 @@ export class User {
   @Column({ type: 'varchar', length: 30 })
   serviceName: string;
 
-  @Column({default:null })
+  @Column({ default: null })
   idTeam: number | null;
 
-
-
-
-  
-  @OneToMany(() => DailyWork, dailyWork => dailyWork.Collab)
+  @OneToMany(() => DailyWork, (dailyWork) => dailyWork.Collab)
   dailyWorks: DailyWork[];
-  
-  @OneToMany(() => Team, team => team.responsable)
+
+  @OneToMany(() => Team, (team) => team.responsable)
   teams: Team[];
 
-  @OneToOne(() => Team, team => team.leader)
+  @OneToOne(() => Team, (team) => team.leader)
   leadTeam: Team;
- 
-  @OneToMany(() => Plan, plan => plan.collab)
+
+  @OneToMany(() => Plan, (plan) => plan.collab)
   plans: Plan[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword() {
+    const salt = await bcrypt.genSalt(10);
+    this.pwd = await bcrypt.hash(this.pwd, salt);
+
+  }
 }
