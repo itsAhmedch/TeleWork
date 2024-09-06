@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { TeamService } from './../services/Team.service';
 import { CreateTeamDto, UpdateTeamDto } from './../dto/Team.dto';
@@ -14,6 +15,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Team } from 'src/entities/team.entity';
+import { JwtAuthGuard } from 'src/guards/jwt-guard';
+import { RolesGuard } from 'src/guards/roles-guards';
+import { hasRoles } from 'src/guards/decorator/roles.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard)
 
 @Controller('team/')
 export class TeamController {
@@ -26,6 +32,7 @@ export class TeamController {
   ) {}
 
   @Post()
+  @hasRoles('respo','admin')
   async create(@Body() createTeamDto: CreateTeamDto) {
     const { idRespo, idLeader, idTeam, ...teamData } = createTeamDto;
 
@@ -64,26 +71,31 @@ export class TeamController {
   }
 
   @Get()
+  @hasRoles('respo','admin')
   findAll() {
     return this.teamService.findAll();
   }
 
   @Get(':id')
+  @hasRoles('respo','admin')
   findOne(@Param('id') id: number) {
     return this.teamService.findOne(id);
   }
 
   @Get('/By-Respo/:idRespo')
+  @hasRoles('respo','admin')
   findByRespo(@Param('idRespo') idRespo: number) {
     return this.teamService.findByRespo(idRespo);
   }
 
   @Patch(':id')
+  @hasRoles('respo','admin')
   update(@Param('id') id: number, @Body() updateTeamDto: UpdateTeamDto) {
     return this.teamService.update(id, updateTeamDto);
   }
 
   @Delete(':id')
+  @hasRoles('respo','admin')
   remove(@Param('id') id: number) {
     return this.teamService.remove(id);
   }

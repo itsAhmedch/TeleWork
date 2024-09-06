@@ -31,7 +31,7 @@ export class User {
   @Column({ type: 'varchar', length: 20 })
   lastName: string;
 
-  @Column({ type: 'varchar', length: 30 })
+  @Column({ type: 'varchar' })
   pwd: string;
 
   @Column({ type: 'varchar', length: 30 })
@@ -56,6 +56,7 @@ export class User {
   @BeforeUpdate()
   async hashPassword() {
     const salt = await bcrypt.genSalt(10);
+  
     this.pwd = await bcrypt.hash(this.pwd, salt);
 
   }

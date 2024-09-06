@@ -24,9 +24,7 @@ export class authService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-  
-    console.log(user && user.pwd);
-    
+
     // Validate password
     const isPasswordValid =
       user && user.pwd ? await bcrypt.compare(pwd, user.pwd) : false;
@@ -36,7 +34,8 @@ export class authService {
     }
 
     // Prepare payload
-
+ 
+    
     const payload = {
       username: user.name + ' ' + user.lastName,
       sub: user.id,

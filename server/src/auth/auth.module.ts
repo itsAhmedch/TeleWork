@@ -7,6 +7,8 @@ import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { authService } from './auth.service'; // Renamed to PascalCase
 import { authContoller } from './auth.controller'; // Renamed to PascalCase
+import { RolesGuard } from 'src/guards/roles-guards';
+import { JwtAuthGuard } from 'src/guards/jwt-guard';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { authContoller } from './auth.controller'; // Renamed to PascalCase
     }),
   ],
   controllers: [authContoller], 
-  providers: [authService, JwtStrategy], 
+  providers: [authService, JwtStrategy,JwtAuthGuard, RolesGuard], 
   exports: [authService, JwtModule], 
 })
 export class AuthModule {}
