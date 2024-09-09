@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { DailyWorkService } from 'src/services/DailyWork.service';
 import { CreateDailyWorkDto } from 'src/dto/DailyWork.dto';
 import { DailyWork } from 'src/entities/DailyWork.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
+import { JwtAuthGuard } from 'src/guards/jwt-guard';
+import { RolesGuard } from 'src/guards/roles-guards';
+import { hasRoles } from 'src/guards/decorator/roles.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard)
 
 @Controller('Daily-Work')
 export class DailyWorkController {
@@ -14,6 +19,7 @@ export class DailyWorkController {
   ) {}
 
   @Post()
+  @hasRoles('collab','leader')
   async create(
     @Body() CreateDailyWorkDto: CreateDailyWorkDto,
   ): Promise<DailyWork> {
@@ -31,16 +37,19 @@ export class DailyWorkController {
   }
 
   @Get()
+  @hasRoles('respo','admin')
   async findAll(): Promise<DailyWork[]> {
     return this.DailyWorkService.findAll();
   }
 
   @Get(':id')
+  @hasRoles('respo','admin')
   async findOne(@Param('id') id: number): Promise<DailyWork> {
     return this.DailyWorkService.findOne(id);
   }
 
   @Get('/by-Collab/:id')
+  @hasRoles('respo','admin')
   async findByCollab(@Param('id') id: number): Promise<DailyWork[]> {
     return this.DailyWorkService.findByCollab(id);
   }
