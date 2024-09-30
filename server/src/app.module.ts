@@ -11,7 +11,7 @@ import { DailyWorkModule } from './modules/dailyWork.module';
 import { PlanModule } from './modules/plan.module';
 import { DailyWork } from './entities/DailyWork.entity'; // Add this import if you need it
 import { Plan } from './entities/plan.entity';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth.module';
 
 @Module({
   imports: [

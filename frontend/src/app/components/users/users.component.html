@@ -1,0 +1,18 @@
+<div class="d-flex justify-content-between align-items-center">
+    <!-- Search bar takes up the remaining space -->
+    <div class="flex-grow-1 me-3">
+      <app-search (search)="searchUsers($event)"></app-search>
+    </div>
+  
+    <!-- Add button aligned to the right -->
+   
+    <app-add-users></app-add-users>
+   
+  </div>
+<app-table
+  [tableHeaders]="tableHeaders"
+  [tableData]="tableData"
+  [totalPage]="totalPage"
+  (editRow)="openEditModal($event)"
+  (deleteRow)="deleteUser($event)"
+></app-table>

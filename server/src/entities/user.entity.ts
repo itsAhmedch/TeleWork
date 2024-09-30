@@ -14,12 +14,26 @@ import { DailyWork } from './DailyWork.entity';
 import { Plan } from './plan.entity';
 import * as bcrypt from 'bcrypt';
 
+
+
+export enum Role {
+  COLLAB = 'collab',
+  LEADER = 'leader',
+  RESPO = 'respo',
+  ADMIN = 'admin',
+}
+
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 11 })
+
+  @Column({ type: 'varchar', length: 8, unique: true})
+  cin: string ;
+
+
+  @Column({ type: 'enum', enum:Role })
   role: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
@@ -37,14 +51,17 @@ export class User {
   @Column({ type: 'varchar', length: 30 })
   serviceName: string;
 
-  @Column({ default: null })
-  idTeam: number | null;
+
 
   @OneToMany(() => DailyWork, (dailyWork) => dailyWork.Collab)
   dailyWorks: DailyWork[];
 
   @OneToMany(() => Team, (team) => team.responsable)
   teams: Team[];
+
+  @ManyToOne(() => Team, team => team.users) // Assuming a many-to-one relationship
+  @JoinColumn({ name: 'idTeam' }) // Specify the foreign key
+  team: Team
 
   @OneToOne(() => Team, (team) => team.leader)
   leadTeam: Team;

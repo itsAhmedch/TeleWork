@@ -32,6 +32,10 @@ export class Team {
   @JoinColumn({ name: 'idRespo' })
   responsable: User;
 
+  @OneToMany(() => User, (user) => user.teams, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'idCollab' })
+  users: User;
+
   @OneToOne(() => User, (user) => user.leadTeam, { onDelete: 'SET NULL', eager: true })
   @JoinColumn({ name: 'idLeader' })
   leader: User | null;

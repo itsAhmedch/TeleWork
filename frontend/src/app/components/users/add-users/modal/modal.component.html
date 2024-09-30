@@ -1,0 +1,149 @@
+<div class="modal-dialog modal-dialog-scrollable">
+
+
+
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="staticBackdropLabel">{{ title }}</h5>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Close"
+        (click)="closeModal()"
+      ></button>
+    </div>
+
+
+
+    <div class="modal-body">
+      <form [formGroup]="userForm">
+        <div class="form-outline" data-mdb-input-init *ngIf="!editMode">
+          <input
+            type="text"
+            id="typeCin"
+            class="form-control"
+            formControlName="cin"
+          />
+          <label class="form-label" for="typeCin">CIN</label>
+          <!-- Error messages -->
+          <div
+            *ngIf="userForm.get('cin')?.invalid && userForm.get('cin')?.touched"
+            class="text-danger"
+          >
+            <!-- Required error -->
+            <small *ngIf="userForm.get('cin')?.errors?.['required']"
+              >CIN is required.</small
+            >
+
+            <!-- Pattern error (only numeric and exactly 8 characters) -->
+            <small *ngIf="userForm.get('cin')?.errors?.['pattern']"
+              >CIN must be 8 numeric characters.</small
+            >
+          </div>
+        </div>
+
+        <div class="form-outline" data-mdb-input-init>
+          <input
+            type="text"
+            id="typeName"
+            class="form-control"
+            formControlName="name"
+          />
+          <label class="form-label" for="typeName" *ngIf="!editMode"
+            >Name</label
+          >
+        </div>
+
+        <div class="form-outline" data-mdb-input-init>
+          <input
+            type="text"
+            id="typeLastName"
+            class="form-control"
+            formControlName="lastName"
+          />
+          <label class="form-label" for="typeLastName" *ngIf="!editMode"
+            >Last Name</label
+          >
+        </div>
+
+        <div class="form-outline" data-mdb-input-init *ngIf="!editMode">
+          <input
+            type="email"
+            id="typeEmail"
+            class="form-control"
+            formControlName="email"
+          />
+          <label class="form-label" for="typeEmail">Email </label>
+          <div
+            *ngIf="
+              userForm.get('email')?.invalid && userForm.get('email')?.touched
+            "
+            class="error-message"
+          >
+            <small *ngIf="userForm.get('email')?.errors?.['required']"
+              >Email is required.</small
+            >
+
+            <small *ngIf="userForm.get('email')?.errors?.['pattern']"
+              >Please enter a valid email.</small
+            >
+          </div>
+        </div>
+
+        <div class="form-outline" data-mdb-input-init>
+          <input type="password" class="form-control" formControlName="pwd" />
+          <label class="form-label" for="pwd">password </label>
+          <div
+            *ngIf="userForm.get('pwd')?.invalid && userForm.get('pwd')?.touched"
+            class="error-message"
+          >
+            <small
+              class="error-message"
+              *ngIf="userForm.get('pwd')?.errors?.['required']"
+              >Password is required.</small
+            >
+
+            <small
+              class="error-message"
+              *ngIf="userForm.get('pwd')?.errors?.['pattern']"
+            >
+              1 uppercase letter, 1 special character, and be at least 8
+              characters long.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="teamSelect">Select Team</label>
+          <select formControlName="idTeam" id="teamSelect" class="form-control">
+            <option *ngFor="let team of teams" [value]="team.id">{{team.name}}</option>
+          </select>
+          
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="roleSelect">Select Role</label>
+          <select formControlName="role" id="roleSelect" class="form-control">
+            <option>collab</option>
+            <option>leader</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeModal()">
+        Close
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="
+          editMode ? !userForm.dirty || !userForm.valid : !userForm.valid
+        "
+        (click)="saveUser()"
+      >
+        {{ editMode ? "Update" : "Create" }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -32,7 +32,7 @@ export class TeamController {
   ) {}
 
   @Post()
-  @hasRoles('respo','admin')
+  // @hasRoles('respo','admin')
   async create(@Body() createTeamDto: CreateTeamDto) {
     const { idRespo, idLeader, idTeam, ...teamData } = createTeamDto;
 
@@ -82,10 +82,15 @@ export class TeamController {
     return this.teamService.findOne(id);
   }
 
-  @Get('/By-Respo/:idRespo')
+  @Get('/Team-By-Respo/:idRespo')
   @hasRoles('respo','admin')
-  findByRespo(@Param('idRespo') idRespo: number) {
-    return this.teamService.findByRespo(idRespo);
+  findTeamByRespo(@Param('idRespo') idRespo: number) {
+    return this.teamService.findTeamByRespo(idRespo);
+  }
+  @Get('/SubTeam-By-Respo/:idRespo/:idTeam')
+  @hasRoles('respo','admin')
+  findSubTeamByRespo(@Param('idRespo') idRespo: number,@Param('idTeam') idTeam: number) {
+    return this.teamService.findSubTeamByRespo(idRespo,idTeam);
   }
 
   @Patch(':id')

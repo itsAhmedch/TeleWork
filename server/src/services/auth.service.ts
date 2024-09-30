@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 
-import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserDto } from 'src/dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
 @Injectable()
 export class authService {
@@ -18,7 +18,10 @@ export class authService {
   async login(loginUserDto: LoginUserDto) {
     const { email, pwd } = loginUserDto;
 
-    let user = await this.userRepository.findOneBy({ email: email });
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+      relations: ['team'],
+    });
 
     // If user is still not found, throw UnauthorizedException
     if (!user) {
@@ -33,18 +36,30 @@ export class authService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Prepare payload
- 
-    
     const payload = {
       username: user.name + ' ' + user.lastName,
-      sub: user.id,
+      id: user.id,
       role: user.role,
-      idTeam: user.idTeam,
+      idTeam: user.team?.id,
     };
+
+    console.log(payload);
 
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  async decode(request): Promise<any> {
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) {
+      throw new Error('Authorization header missing');
+    }
+
+    const token = authHeader.split(' ')[1]; // Assuming the token is sent as "Bearer <token>"
+
+    const decodedToken = (await this.jwtService.decode(token)) as any;
+
+    return decodedToken;
   }
 }

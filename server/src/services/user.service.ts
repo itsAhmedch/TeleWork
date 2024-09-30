@@ -2,22 +2,37 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, Like, Repository } from 'typeorm';
 import { User } from './../entities/user.entity';
 import { CreateUserDto, UpdateUserDto } from '../dto/User.dto';
-
+import { JwtService } from '@nestjs/jwt';
+import { Team } from 'src/entities/team.entity';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Team)
+    private teamRepository: Repository<Team>,
+    private jwtService: JwtService, // Inject JWT service to decode the token
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const user = this.userRepository.create(createUserDto);
+      console.log(createUserDto);
+   
+      const team = await this.teamRepository.findOne({ where: { id: createUserDto.idTeam } });
+      if (!team) {
+        throw new BadRequestException('Team not found');
+}
+      // Create the user entity and set the team
+    const user = this.userRepository.create({
+      ...createUserDto,
+      team: team?team:null, // Set the found team here
+    });
       return await this.userRepository.save(user);
     } catch (error) {
       console.log(error);
@@ -27,19 +42,119 @@ export class UserService {
 
   async findAll(): Promise<User[]> {
     try {
-      return await this.userRepository.find();
+      return await this.userRepository.find({
+        select: [
+          'id',
+          'role',
+          'email',
+          'name',
+          'lastName',
+          'serviceName',
+          'team',
+        ], // Add other fields you need, except 'pwd'
+        relations: ['team'], 
+      });
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error);
     }
   }
+  async getUsersByRespo(
+    token: string,
+    search?: string,
+    page: number = 1, // Default value for page
+    limit: number = 10 // Default value for limit
+  ): Promise<{ users: any[]; total: number }> {
+    // Decode the JWT token to extract the respoId
+    const decodedToken = await this.jwtService.decode(token) as any;
+    const respoId = decodedToken.id;
+  
+    // Fetch teams where the responsible user is the specified respo
+    const teams = await this.teamRepository.find({
+      where: { responsable: { id: respoId } },
+      relations: ['childTeams'],
+    });
+  
+    const teamIds = teams.map(team => team.id);
+  
+    // If no teams found, return early with empty result
+    if (teamIds.length === 0) {
+      return { users: [], total: 0 };
+    }
+  
+    // Fetch users based on team IDs
+    const usersInTeams = await this.userRepository.find({
+      where: { team: In(teamIds) },
+      relations: ['team'],
+    });
+  
+    const userIds = usersInTeams.map(user => user.id);
+  
+    // Return early if no users found
+    if (userIds.length === 0) {
+      return { users: [], total: 0 };
+    }
+  
+    // Set up the find options for filtering and pagination
+    const findOptions: FindManyOptions<User> = {
+      where: { id: In(userIds) }, // Only get users that are in the userIds
+      skip: (page - 1) * limit,
+      take: limit,
+      select: ['id', 'cin', 'email', 'name', 'lastName', 'role', 'serviceName', 'team'],
+      relations: ['team', 'team.parentTeam'], // Specify the relation to be included
+    };
+  
+    // If a search term is provided, filter users by various fields
+    if (search) {
+      findOptions.where = [
+        { id: In(userIds), email: Like(`%${search}%`) },
+        { id: In(userIds), name: Like(`%${search}%`) },
+        { id: In(userIds), lastName: Like(`%${search}%`) },
+        { id: In(userIds), cin: Like(`%${search}%`) },
+        { id: In(userIds), team: { name: Like(`%${search}%`) } },
+        { id: In(userIds), team: { parentTeam: { name: Like(`%${search}%`) } } },
+      ] as FindOptionsWhere<User>[];
+    }
+  
+    // Retrieve users and total count for pagination
+    const [users, total] = await this.userRepository.findAndCount(findOptions);
+  
+    // Map the result to ensure a clear format
+    const result = users.map(user => ({
+      id: user.id,
+      cin: user.cin,
+      email: user.email,
+      name: user.name,
+      lastName: user.lastName,
+      role: user.role,
+      team: user.team ? user.team.name : null,
+      parentTeam: user.team && user.team.parentTeam ? user.team.parentTeam.name : null,
+    }));
+  
+    return { users: result, total };
+  }
+  
+  
 
-  async findOne(id: number): Promise<User> {
+  async findOne(id: number): Promise<any> {
     try {
-      const user = await this.userRepository.findOneBy({ id });
+      const user = await this.userRepository.findOne({
+        where: { id },
+        select: [
+          'id',
+          'role',
+          'email',
+          'name',
+          'lastName',
+          'serviceName',
+          'team',
+        ],
+      });
+
       if (!user) {
         throw new NotFoundException(`User not found`);
       }
+
       return user;
     } catch (error) {
       console.log(error);
@@ -75,7 +190,7 @@ export class UserService {
     try {
       const result = await this.userRepository.delete(id);
       if (result.affected === 0) {
-        throw new NotFoundException(`Plan with ID ${id} not found`);
+        throw new NotFoundException(`user with ID ${id} not found`);
       }
     } catch (error) {
       console.log(error);

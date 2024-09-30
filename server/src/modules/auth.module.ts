@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { User } from 'src/entities/user.entity';
-import { JwtStrategy } from './jwt.strategy';
+import { JwtStrategy } from '../auth/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { authService } from './auth.service'; // Renamed to PascalCase
-import { authContoller } from './auth.controller'; // Renamed to PascalCase
+import { authService } from 'src/services/auth.service'; 
+import { authController } from '../controllers/auth.controller'; 
 import { RolesGuard } from 'src/guards/roles-guards';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 
@@ -14,18 +14,18 @@ import { JwtAuthGuard } from 'src/guards/jwt-guard';
   imports: [
     TypeOrmModule.forFeature([User]),
     PassportModule,
-    ConfigModule, 
+    ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'hello', 
+        secret: configService.get<string>('JWT_SECRET') || 'hello', // Use your JWT_SECRET here
         signOptions: { expiresIn: '1h' },
       }),
       inject: [ConfigService],
     }),
   ],
-  controllers: [authContoller], 
-  providers: [authService, JwtStrategy,JwtAuthGuard, RolesGuard], 
-  exports: [authService, JwtModule], 
+  controllers: [authController],
+  providers: [authService, JwtStrategy, JwtAuthGuard, RolesGuard],
+  exports: [authService, JwtModule],
 })
 export class AuthModule {}
