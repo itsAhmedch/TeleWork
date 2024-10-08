@@ -17,33 +17,39 @@ export class TeamService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
-
-  // Create a new team with optional parent team
   async create(
     responsable: User,
     leader: User | null,
     parentTeam: Team | null,
     teamData: Partial<Team>,
-  ): Promise<Team> {
+  ): Promise<Partial<Team>> { // Changed return type to Partial<Team> to be more flexible
     try {
       // Create the new team
-
       const team = this.teamRepository.create({
         ...teamData,
-        responsable,
+        responsable, // The responsable field is set here
         leader,
         parentTeam, // Set parent team if exists, null otherwise
       });
-
-      console.log(team.parentTeam);
-
-      return this.teamRepository.save(team);
+  
+      // Await the team saving process
+      const savedTeam = await this.teamRepository.save(team);
+  
+      // Return only the fields you want, excluding 'responsable'
+      return {
+        id: savedTeam.id, // Include the id and other necessary fields
+        name: savedTeam.name, // Example field
+        leader: savedTeam.leader,
+        parentTeam: savedTeam.parentTeam,
+        // Include other fields that are necessary, except 'responsable'
+      };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw new BadRequestException(error.message);
     }
   }
-
+  
+  
   // Fetch all teams with relations
   async findAll(): Promise<Team[]> {
     try {

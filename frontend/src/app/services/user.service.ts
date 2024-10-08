@@ -54,7 +54,7 @@ async getFilteredUsers(search?: string, page?: number, limit?: number): Promise<
   // Fetch teams by Respo ID
   getTeamsByRespo(idRespo: number): Observable<any> {
     const url = `${this.apiUrl}/team/Team-By-Respo/${idRespo}`;
-    return this.http.get<any>(url);
+    return this.http.get(url);
   }
 
   // Fetch sub-teams by Respo ID and Team ID
@@ -72,16 +72,29 @@ async getFilteredUsers(search?: string, page?: number, limit?: number): Promise<
   addUser(createUserDto: CreateUserDto): Observable<any> {
     console.log(createUserDto);
     
-      return this.http.post(`http://localhost:3000/user`, createUserDto)
+      return this.http.post(`${this.apiUrl}/user`, createUserDto).pipe(
+        catchError((error) => {
+          const errorMsg=error.error.message        
+          return throwError(() => new Error(errorMsg));
+        })
+      );
         
     }
-  editUser(EditUSer: any): Observable<any> {
-   
-      return this.http.patch<any>(`${this.apiUrl}/user`, EditUSer)
+  editUser(EditUSer: any,id:number): Observable<any> {
+      console.log(EditUSer);
+
+      return this.http.patch(`${this.apiUrl}/user/${id}`, EditUSer)
         .pipe(
           catchError((error) => {
-            console.error('Error editing user:', error);
-            return throwError(() => new Error('Error editing user'));
+            const errorMsg=error.error.message
+            console.log(errorMsg);
+            
+            if (Array.isArray(errorMsg)) {
+              return throwError(() => new Error(errorMsg[errorMsg.length - 1]));
+            }
+            
+           
+            return throwError(() => new Error(errorMsg));
           })
         );
     }

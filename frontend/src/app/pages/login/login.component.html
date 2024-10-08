@@ -30,7 +30,7 @@
 
     <div class="form-group">
       <label for="pwd">password: </label>
-      <input type="text" formControlName="pwd" class="form-control" />
+      <input type="password" formControlName="pwd" class="form-control" />
       <div
         *ngIf="signUpForm.get('pwd')?.invalid && signUpForm.get('pwd')?.touched"
         class="error-message"

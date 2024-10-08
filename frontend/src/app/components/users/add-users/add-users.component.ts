@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { MdbModalRef, MdbModalService, MdbModalModule } from 'mdb-angular-ui-kit/modal';
 import { ModalComponent } from './modal/modal.component';
 import { UserService } from '../../../services/user.service';
@@ -11,7 +11,7 @@ import { UserService } from '../../../services/user.service';
   styleUrls: ['./add-users.component.scss'],
 })
 export class AddUsersComponent {
-  
+  @Output() userModified = new EventEmitter<void>();
   constructor(private modalService: MdbModalService,private userService:UserService ) {}
 
   openModal(editMode: boolean, userData?: any) {
@@ -19,26 +19,15 @@ export class AddUsersComponent {
       data: { editMode, userData },
     });
 
-    modalRef.onClose.subscribe(async(result: any) => {
-      console.log(result);
+    modalRef.onClose.subscribe((result) => {
+      console.log(result,"dddddddddddddddd");
       
-      if (result) {
-        
-        
-        if (result.type === 'edit') {
-          console.log('Edited User:', result.data);
-          this.userService.editUser(result.data)
-        } else if (result.type === 'create') {
-          console.log('New User:', result.data);
-          
-          await this.userService.addUser(result.data).subscribe(user=>{
-            console.log({user});
-            
-          })
-          // Handle the new user data
-        }
-      }
+ 
+        this.userModified.emit();
+      
+     
     });
+  
   }
 
   // Method to handle adding a user (opens the modal in create mode)

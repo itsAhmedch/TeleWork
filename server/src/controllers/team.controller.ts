@@ -8,6 +8,8 @@ import {
   Delete,
   NotFoundException,
   UseGuards,
+  Request,
+  ConflictException,
 } from '@nestjs/common';
 import { TeamService } from './../services/Team.service';
 import { CreateTeamDto, UpdateTeamDto } from './../dto/Team.dto';
@@ -18,9 +20,9 @@ import { Team } from 'src/entities/team.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { RolesGuard } from 'src/guards/roles-guards';
 import { hasRoles } from 'src/guards/decorator/roles.decorator';
+import { JwtService } from '@nestjs/jwt';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-
 @Controller('team/')
 export class TeamController {
   constructor(
@@ -29,6 +31,7 @@ export class TeamController {
     private userRepository: Repository<User>,
     @InjectRepository(Team)
     private teamRepository: Repository<Team>,
+    private jwtService: JwtService,
   ) {}
 
   @Post()
@@ -37,7 +40,10 @@ export class TeamController {
     const { idRespo, idLeader, idTeam, ...teamData } = createTeamDto;
 
     // Fetch the responsable user
-    const responsable = await this.userRepository.findOneBy({ id: idRespo ,role:'respo'});
+    const responsable = await this.userRepository.findOneBy({
+      id: idRespo,
+      role: 'respo',
+    });
     if (!responsable) {
       throw new NotFoundException(`respo with ID ${idRespo} not found`);
     }
@@ -45,7 +51,10 @@ export class TeamController {
     // Fetch the leader user if provided
     let leader: User | null;
     if (idLeader) {
-      leader = await this.userRepository.findOneBy({ id: idLeader  , role:'collab'});
+      leader = await this.userRepository.findOneBy({
+        id: idLeader,
+        role: 'collab',
+      });
       if (!leader) {
         throw new NotFoundException(`User with ID ${idLeader} not found`);
       }
@@ -71,37 +80,60 @@ export class TeamController {
   }
 
   @Get()
-  @hasRoles('respo','admin')
+  @hasRoles('respo', 'admin')
   findAll() {
     return this.teamService.findAll();
   }
 
   @Get(':id')
-  @hasRoles('respo','admin')
+  @hasRoles('respo', 'admin')
   findOne(@Param('id') id: number) {
     return this.teamService.findOne(id);
   }
 
   @Get('/Team-By-Respo/:idRespo')
-  @hasRoles('respo','admin')
+  @hasRoles('respo', 'admin')
   findTeamByRespo(@Param('idRespo') idRespo: number) {
     return this.teamService.findTeamByRespo(idRespo);
   }
   @Get('/SubTeam-By-Respo/:idRespo/:idTeam')
-  @hasRoles('respo','admin')
-  findSubTeamByRespo(@Param('idRespo') idRespo: number,@Param('idTeam') idTeam: number) {
-    return this.teamService.findSubTeamByRespo(idRespo,idTeam);
+  @hasRoles('respo', 'admin')
+  findSubTeamByRespo(
+    @Param('idRespo') idRespo: number,
+    @Param('idTeam') idTeam: number,
+  ) {
+    return this.teamService.findSubTeamByRespo(idRespo, idTeam);
   }
 
   @Patch(':id')
-  @hasRoles('respo','admin')
+  @hasRoles('respo', 'admin')
   update(@Param('id') id: number, @Body() updateTeamDto: UpdateTeamDto) {
     return this.teamService.update(id, updateTeamDto);
   }
 
   @Delete(':id')
-  @hasRoles('respo','admin')
-  remove(@Param('id') id: number) {
+  @hasRoles('respo', 'admin')
+  remove(@Request() req: any, @Param('id') id: number) {
+    const token = this.jwtService.verify(req);
+    if (token.role === 'respo') {
+      const team = this.teamRepository.findOne({
+        where: { id: id, responsable: { id: token.sub } },
+        relations: ['responsable'],
+      });
+      if (!team) {
+        throw new NotFoundException(`team with ID ${id} not found`);
+      }
+    }
+
+    const user =  this.userRepository.findOne({
+      where: { team: {id} },
+      relations: ['team'],
+    });
+    if (user) {
+      throw new ConflictException(`you should delete all the users of team before deleting it`);
+    }
+
+
     return this.teamService.remove(id);
   }
 }

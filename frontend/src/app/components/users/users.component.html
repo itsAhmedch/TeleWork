@@ -6,8 +6,8 @@
   
     <!-- Add button aligned to the right -->
    
-    <app-add-users></app-add-users>
    
+    <app-add-users (userModified)="onUserModified()"></app-add-users>
   </div>
 <app-table
   [tableHeaders]="tableHeaders"

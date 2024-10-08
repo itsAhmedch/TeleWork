@@ -41,18 +41,18 @@ export class UserController {
   @Post()
   async create(@Body() createUserDto: any) {
     console.log(createUserDto);
-    
     const user = await this.userRepository.findOneBy({
-      email: createUserDto.email,
+      cin: createUserDto.cin,
     });
     if (user) {
-      throw new NotFoundException(`email already exists`);
-    } else {
+      throw new NotFoundException(`cin already exists`);
+    }
+    else {
       const user = await this.userRepository.findOneBy({
-        cin: createUserDto.cin,
+        email: createUserDto.email,
       });
       if (user) {
-        throw new NotFoundException(`cin already exists`);
+        throw new NotFoundException(`email already exists`);
       }
     }
 

@@ -9,7 +9,7 @@ import { MdbModalService } from 'mdb-angular-ui-kit/modal';
 @Component({
   selector: 'app-users-components',
   standalone: true,
-  imports: [TableComponent, CommonModule, SearchComponent, AddUsersComponent,AddUsersComponent],
+  imports: [TableComponent, CommonModule, SearchComponent, AddUsersComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
 })
@@ -19,6 +19,7 @@ export class UsersComponent {
   tableHeaders: string[] = [
     '#',
     'Name',
+    'LastName',
     'email',
     'Role',
     'team',
@@ -32,8 +33,11 @@ export class UsersComponent {
   }
 
   
-  searchUsers(search:string){
-    console.log(search);
+  searchUsers(search:any){
+    if (search.isTrusted) {
+      search=''
+    }
+   
     
     this.getusers(search).then((response) => {
       if (response && response.users) {
@@ -60,7 +64,8 @@ export class UsersComponent {
       // Get the response from the API call
       const response = await this.userService.getFilteredUsers(search, page, iteam);
       const users = response.users;
-
+   
+      
       
       const pages = response.page;
 
@@ -78,7 +83,7 @@ export class UsersComponent {
     this.modalService.open(ModalComponent, {
       data: { editMode: true, userData: userData }
     });
-    
+   
     
   }
 
@@ -101,6 +106,9 @@ export class UsersComponent {
     }
   }
   
+  onUserModified() {
+    this.searchUsers(''); // Refresh the table data
+  }
   }
 
 

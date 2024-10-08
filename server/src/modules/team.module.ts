@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TeamController } from 'src/controllers/team.controller';
 
@@ -12,7 +13,7 @@ import { TeamService } from 'src/services/Team.service';
     TypeOrmModule.forFeature([Team,User]), // Register User entity for dependency injection
   ],
   controllers: [TeamController],
-  providers: [TeamService,
+  providers: [TeamService,JwtService
 
    
   ],

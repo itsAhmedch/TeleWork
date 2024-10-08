@@ -1,7 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-
-import { UserService } from '../../../services/user.service';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -9,15 +6,21 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [FormsModule],
   templateUrl: './search.component.html',
-  styleUrl: './search.component.scss'
+  styleUrls: ['./search.component.scss']
 })
-export class SearchComponent  {
-  constructor(private readonly userService: UserService){}
+export class SearchComponent {
+  constructor() {}
+
   searchQuery: string = '';
 
   @Output() search: EventEmitter<string> = new EventEmitter();
 
   onSearch() {
+    if (!this.searchQuery.trim()) {
+      // If the search query is empty or just whitespace, emit an empty string
+      this.searchQuery = '';
+    }
+    
     this.search.emit(this.searchQuery);
   }
 }

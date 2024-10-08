@@ -1,7 +1,4 @@
 <div class="modal-dialog modal-dialog-scrollable">
-
-
-
   <div class="modal-content">
     <div class="modal-header">
       <h5 class="modal-title" id="staticBackdropLabel">{{ title }}</h5>
@@ -9,11 +6,9 @@
         type="button"
         class="btn-close"
         aria-label="Close"
-        (click)="closeModal()"
+        (click)="closeModalFunc()"
       ></button>
     </div>
-
-
 
     <div class="modal-body">
       <form [formGroup]="userForm">
@@ -115,10 +110,99 @@
 
         <div class="form-group">
           <label for="teamSelect">Select Team</label>
-          <select formControlName="idTeam" id="teamSelect" class="form-control">
-            <option *ngFor="let team of teams" [value]="team.id">{{team.name}}</option>
-          </select>
+          <div class="d-flex align-items-center">
+            <input
+            type="text"
+            *ngIf="showTeamField"
+            class="form-control"
+            placeholder="New Team"
+            [(ngModel)]="newTeamName"
+            [ngModelOptions]="{standalone: true}"
+          />
           
+           
+            <select
+              *ngIf="!showTeamField"
+              formControlName="idparentTeam"
+              id="teamSelect"
+              class="form-control"
+              (change)="onTeamChange()"
+            >
+              <option *ngFor="let team of teams" [value]="team.id">
+                {{ team.name }}
+              </option>
+            </select>
+
+            <button
+              *ngIf="!showTeamField"
+              type="button"
+              class="btn btn-primary btn-sm ms-2"
+              (click)="changeTeamMode()"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm ms-2" (click)="addTeam(false)" *ngIf="showTeamField">
+              <i class="fas fa-check"></i>
+            </button>
+
+            <button
+              *ngIf="!showTeamField"
+              [disabled]="!selectedTeamId"
+              type="button"
+              class="btn btn-danger btn-sm ms-2"
+              (click)="deleteTeam(false)"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="subTeamSelect">Select Subteam</label>
+           <div class="d-flex align-items-center">
+          <input
+          type="text"
+          *ngIf="showSubTeamField"
+          class="form-control"
+          placeholder="New SubTeam"
+          [(ngModel)]="newSubTeam"
+          [ngModelOptions]="{standalone: true}"
+        />
+         
+            <select
+              formControlName="idTeam"
+              id="subTeamSelect"
+              class="form-control"
+              [disabled]="!selectedTeamId"
+              *ngIf="!showSubTeamField"
+              (change)="onSubTeamChange()"
+            >
+              <option *ngFor="let subTeam of subTeams" [value]="subTeam.id">
+                {{ subTeam.name }}
+              </option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm ms-2" (click)="addTeam(true)" *ngIf="showSubTeamField" [disabled]="!selectedTeamId">
+              <i class="fas fa-check"></i>
+            </button>
+            <button
+            [disabled]="!selectedTeamId || showTeamField"
+            *ngIf="!showSubTeamField"
+            type="button"
+            class="btn btn-primary btn-sm ms-2"
+            (click)="changeSubTeamMode()"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+            <button
+              [disabled]="!selectedSubTeamId || showTeamField"
+              *ngIf="!showSubTeamField"
+              type="button"
+              class="btn btn-danger btn-sm ms-2"
+              (click)="deleteTeam(true)"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
         </div>
 
         <div class="form-group mb-3">
@@ -126,12 +210,19 @@
           <select formControlName="role" id="roleSelect" class="form-control">
             <option>collab</option>
             <option>leader</option>
+            <option *ngIf="role == 'admin'">responsable</option>
           </select>
         </div>
+
+        <small class="error-message"> {{ ErrorMsg }}</small>
       </form>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeModal()">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeModalFunc()"
+      >
         Close
       </button>
       <button
