@@ -9,10 +9,11 @@
    
     <app-add-users (userModified)="onUserModified()"></app-add-users>
   </div>
-<app-table
+  <app-table
   [tableHeaders]="tableHeaders"
   [tableData]="tableData"
   [totalPage]="totalPage"
   (editRow)="openEditModal($event)"
   (deleteRow)="deleteUser($event)"
+  (Page)="onPageModified($event)" 
 ></app-table>

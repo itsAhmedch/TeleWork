@@ -12,6 +12,7 @@ import { PlanModule } from './modules/plan.module';
 import { DailyWork } from './entities/DailyWork.entity'; // Add this import if you need it
 import { Plan } from './entities/plan.entity';
 import { AuthModule } from './modules/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -24,6 +25,10 @@ import { AuthModule } from './modules/auth.module';
       database: process.env.DB_NAME || 'nest_db2',
       entities: [User, Team, DailyWork,Plan], // List your entities here
       synchronize: true,
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true, // Make it globally available
+      envFilePath: '.env', // Path to your .env file
     }),
     UserModule,
     TeamModule,

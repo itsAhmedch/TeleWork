@@ -1,0 +1,68 @@
+
+
+.normal-day {
+    background-color: #ffffff; // Default color for normal days
+    
+}
+
+// Ensure the table takes full width
+table {
+    width: 100%;
+}
+
+// Table cell alignment and padding
+td,
+th {
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+// First column (Employee names) with proper width
+th:first-child,
+td:first-child {
+    white-space: nowrap;
+    width: 200px;
+}
+
+// Mobile-specific styles
+@media (max-width: 768px) {
+    th,
+    td {
+        padding: 5px;
+    }
+
+    // Font size adjustment for mobile
+    table {
+        font-size: 0.9em;
+    }
+}
+
+
+.text-center {
+    display: flex; /* Enables flexbox */
+    justify-content: center; /* Centers the content */
+    white-space: nowrap; /* Prevents line breaks */
+  }
+  
+
+.working-day {
+    background-color: #c4d2cc; /* Light green background for working days */
+    cursor: pointer; /* Change cursor to pointer for clickable cells */
+}
+
+// calendar-table.component.scss
+.weekend {
+    background-color: #f0f0f0; // Grey background for weekend days
+    color: #ccc; // Light grey text for weekends
+  }
+  
+  .disabled {
+    cursor: not-allowed; // Change cursor to indicate non-interactivity
+    opacity: 0.5; // Make it less visible to show it's disabled
+  }
+
+  h6 {
+    margin: 0; /* Ensure there's no default margin */
+  }
+  

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -23,7 +23,7 @@ export interface CreateUserDto {
 })
 export class TeamsService {
   private apiUrl = `${environment.apiUrl}`; // Ensure this is the correct endpoint
-  private loggedIn = false;
+
 
   constructor(private http: HttpClient) {}
 
@@ -40,6 +40,7 @@ export class TeamsService {
 
   // Fetch sub-teams by Respo ID and Team ID
   getSubTeamsByRespo(idRespo: number, idTeam: number): Observable<any> {
+    
     const url = `${this.apiUrl}/team/SubTeam-By-Respo/${idRespo}/${idTeam}`;
     return this.http.get<any>(url);
   }
@@ -58,9 +59,14 @@ export class TeamsService {
     // Send a POST request with the payload
     return this.http.post<any>(url, payload);
   }
-   deleteTeam(idTeam: number): Observable<any> {
+  deleteTeam(idTeam: number): Observable<any> {
     const url = `${this.apiUrl}/team/${idTeam}`;
-    return this.http.delete<any>(url);
+    return this.http.delete<any>(url).pipe(
+      catchError((error: HttpErrorResponse) => {
+     
+        return throwError(() => new Error(`${error.error.message}`));
+      })
+    );
   }
   
  

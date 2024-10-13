@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -163,23 +164,57 @@ export class TeamService {
     }
   }
 
-  // Remove a team and cascade delete child teams
   async remove(id: number): Promise<void> {
     try {
+      // Fetch the team and its child teams using relations
       const team = await this.teamRepository.findOne({
         where: { id },
-        relations: ['childTeams'],
+        relations: ['childTeams'], // Load child teams
       });
-
+  
+      // Throw exception if the team doesn't exist
       if (!team) {
         throw new NotFoundException(`Team with ID ${id} not found`);
       }
-
-      // Remove the team, and child teams will be deleted due to CASCADE
+  
+      // Check if the main team has users
+      const mainTeamUser = await this.userRepository.findOne({
+        where: { team: { id } },
+        relations: ['team'],
+      });
+  
+      if (mainTeamUser) {
+        throw new ConflictException(
+          `You must delete all users in the main team (ID: ${team.name}) before deleting it`
+        );
+      }
+  
+      // Check if any child team has users
+      for (const childTeam of team.childTeams) {
+        const userInChildTeam = await this.userRepository.findOne({
+          where: { team: { id: childTeam.id } },
+          relations: ['team'],
+        });
+  
+        if (userInChildTeam) {
+          throw new ConflictException(
+            `You must delete all users in child team  '${childTeam.name}' before deleting it`
+          );
+        }
+      }
+  
+      // If no users in main or child teams, remove child teams first
+      if (team.childTeams && team.childTeams.length > 0) {
+        await this.teamRepository.remove(team.childTeams);
+      }
+  
+      // Now remove the parent team
       await this.teamRepository.remove(team);
+      
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw new BadRequestException(error.message);
     }
   }
+  
 }

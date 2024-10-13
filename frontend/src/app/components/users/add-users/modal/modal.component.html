@@ -108,19 +108,18 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="!editMode">
           <label for="teamSelect">Select Team</label>
           <div class="d-flex align-items-center">
             <input
-            type="text"
-            *ngIf="showTeamField"
-            class="form-control"
-            placeholder="New Team"
-            [(ngModel)]="newTeamName"
-            [ngModelOptions]="{standalone: true}"
-          />
-          
-           
+              type="text"
+              *ngIf="showTeamField"
+              class="form-control"
+              placeholder="New Team"
+              [(ngModel)]="newTeamName"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
             <select
               *ngIf="!showTeamField"
               formControlName="idparentTeam"
@@ -141,7 +140,12 @@
             >
               <i class="fas fa-plus"></i>
             </button>
-            <button type="button" class="btn btn-primary btn-sm ms-2" (click)="addTeam(false)" *ngIf="showTeamField">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm ms-2"
+              (click)="addTeam(false)"
+              *ngIf="showTeamField"
+            >
               <i class="fas fa-check"></i>
             </button>
 
@@ -157,18 +161,18 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="!editMode">
           <label for="subTeamSelect">Select Subteam</label>
-           <div class="d-flex align-items-center">
-          <input
-          type="text"
-          *ngIf="showSubTeamField"
-          class="form-control"
-          placeholder="New SubTeam"
-          [(ngModel)]="newSubTeam"
-          [ngModelOptions]="{standalone: true}"
-        />
-         
+          <div class="d-flex align-items-center">
+            <input
+              type="text"
+              *ngIf="showSubTeamField"
+              class="form-control"
+              placeholder="New SubTeam"
+              [(ngModel)]="newSubTeam"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
             <select
               formControlName="idTeam"
               id="subTeamSelect"
@@ -181,18 +185,24 @@
                 {{ subTeam.name }}
               </option>
             </select>
-            <button type="button" class="btn btn-primary btn-sm ms-2" (click)="addTeam(true)" *ngIf="showSubTeamField" [disabled]="!selectedTeamId">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm ms-2"
+              (click)="addTeam(true)"
+              *ngIf="showSubTeamField"
+              [disabled]="!selectedTeamId"
+            >
               <i class="fas fa-check"></i>
             </button>
             <button
-            [disabled]="!selectedTeamId || showTeamField"
-            *ngIf="!showSubTeamField"
-            type="button"
-            class="btn btn-primary btn-sm ms-2"
-            (click)="changeSubTeamMode()"
-          >
-            <i class="fas fa-plus"></i>
-          </button>
+              [disabled]="!selectedTeamId || showTeamField"
+              *ngIf="!showSubTeamField"
+              type="button"
+              class="btn btn-primary btn-sm ms-2"
+              (click)="changeSubTeamMode()"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
             <button
               [disabled]="!selectedSubTeamId || showTeamField"
               *ngIf="!showSubTeamField"

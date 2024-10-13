@@ -1,0 +1,98 @@
+<div class="container">
+    <div class="d-flex align-items-center flex-wrap">
+        <!-- Employee List Component in a single line -->
+        <app-employees-list style="transform: translateY(38%); position: relative; z-index: 10; margin-left: 10px; white-space: nowrap;" 
+            class="me-4 d-none d-md-flex" 
+            (employeesEvent)="handleEmployees($event)"
+            (RespoEvent)="getRespoId($event)"
+            (workingsDaysEvent)="getWorkingDays($event)">
+           
+        </app-employees-list>
+    
+        <!-- Navigation buttons (hide on mobile) -->
+        <div class="d-flex align-items-center d-none d-md-flex" style="margin-left: 10px;">
+            <button class="btn btn-primary me-2" (click)="prevMonth()" [disabled]="currentDate.isBefore(moment().startOf('year'))">
+                &lt; Previous
+            </button>
+            <span class="me-3">{{ monthYearLabel }}</span>
+            <button class="btn btn-primary me-2" (click)="nextMonth()">Next &gt;</button>
+            <button class="btn btn-secondary" (click)="resetToCurrentDate()">Today</button>
+        </div>
+    </div>
+    
+    <!-- Schedule table for the full month (Desktop) -->
+    <div class="table-responsive d-none d-md-block">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="position: sticky; left: 0; background: white; z-index: 1; min-width: 150px;"></th>
+                    <th *ngFor="let day of daysInMonth" [ngClass]="{ weekend: day.isWeekend, 'normal-day': !day.isWeekend }">
+                        {{ day.date.format('DD') }}<br />
+                        {{ day.date.format('ddd') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let employee of employees">
+                    <td style="position: sticky; left: 0; background: white; z-index: 1; width: 150px;">
+                        {{ employee.fullname }} (ID: {{ employee.id }})
+                    </td>
+                    <td *ngFor="let day of daysInMonth" style="cursor: pointer;" class="day" [class.weekend]="day.isWeekend"
+                        [ngClass]="{ 'working-day': isChoosingDay(employee.id, day.date) }"
+                        (click)="!day.isWeekend ? toggleShift(employee.id, day.date) : null"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Navigation buttons for switching weeks (Mobile) -->
+    <div class="d-flex flex-column align-items-start mb-3 d-md-none">
+        <!-- Employee List Component -->
+        <app-employees-list  
+            class="me-4" 
+            (employeesEvent)="handleEmployees($event)">
+        </app-employees-list>
+    
+        <!-- Navigation buttons -->
+        <div class="d-flex align-items-center">
+            <button class="btn btn-primary me-3" (click)="prevWeek()" [disabled]="currentWeekIndex === 0">
+                &lt;
+            </button>
+            <span>{{ weekLabel }}</span>
+            <button class="btn btn-primary ms-3" (click)="nextWeek()">
+                &gt;
+            </button>
+            <button class="btn btn-secondary mx-3" (click)="resetToCurrentDate()">Today</button>
+        </div>
+    </div>
+    
+    <!-- Schedule table for the weekdays only (Mobile) -->
+    <div class="table-responsive d-md-none">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="position: sticky; left: 0; background: white; z-index: 1; min-width: 150px;">Employees</th>
+                    <th *ngFor="let day of daysInWeek" [ngClass]="{ weekend: day.isWeekend, 'normal-day': !day.isWeekend }">
+                        {{ day.date.format('DD') }}<br />
+                        {{ day.date.format('ddd') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let employee of employees">
+                    <td style="position: sticky; left: 0; background: white; z-index: 1; width: 150px;">
+                        {{ employee.fullname }} (ID: {{ employee.id }})
+                    </td>
+                    <td *ngFor="let day of daysInWeek" [ngClass]="{ 'working-day': isChoosingDay(employee.id, day.date) }"
+                        (click)="!day.isWeekend ? toggleShift(employee.id, day.date) : null"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+       <!-- Fixed Bottom Bar -->
+       <div class="fixed-bottom d-flex justify-content-end bg-light p-3" style="z-index: 1000;">
+        <button class="btn btn-success me-2" (click)="showProposal()">Show Proposal</button>
+        <button class="btn btn-primary" [disabled]="planChanges.length === 0" (click)="savePlans()">Save Plans</button>
+    </div>
+</div>

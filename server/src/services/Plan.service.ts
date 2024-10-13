@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Plan } from 'src/entities/plan.entity';
 import { CreatePlanDto, UpdatePlanDto } from 'src/dto/Plan.dto';
 import { Team } from 'src/entities/team.entity';
@@ -15,6 +15,8 @@ export class PlanService {
   constructor(
     @InjectRepository(Plan)
     private readonly planRepository: Repository<Plan>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async create(createPlanDto: CreatePlanDto, team, collab): Promise<Plan> {
@@ -104,6 +106,77 @@ export class PlanService {
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error);
+    }
+  }
+
+  async getPlans(idTeams: number[], isProposal: boolean): Promise<any> {
+    // Fetch all users belonging to the specified teams
+    const users = await this.userRepository.find({
+      where: { team: { id: In(idTeams) } }, // Fetch users belonging to any of the specified team IDs
+      select: ['id'], // Fetch only user IDs
+    });
+
+    const userIds = users.map(user => user.id); // Extract user IDs
+
+    // Fetch plans associated with those user IDs
+    const plans = await this.planRepository.find({
+      where: {
+        collab: { id: In(userIds) }, // Assuming 'collab' is the relationship to users in the Plan entity
+        isProposal: isProposal, // Additional filter based on the isProposal flag
+      },
+    });
+
+    return plans;
+  }
+  async processPlanChanges(
+    planChanges: { Id: number; dates: string; action: string }[],
+    isProposal: boolean,
+  ): Promise<void> {
+    for (const change of planChanges) {
+      const { Id, dates, action } = change;
+      let idTeam: number;
+      const user = await this.userRepository.findOne({
+        where: { id: Id },
+        relations: ['team'], // Make sure to include 'team' in relations
+      });
+
+      if (user && user.team) {
+        idTeam = user.team.id;
+     
+      } else {
+        throw new NotFoundException('User or Team not found');
+      }
+
+      // Convert the date string to a Date object
+      const dateObj = new Date(dates);
+
+      if (action === 'delete') {
+        // Delete plan logic
+        await this.planRepository.delete({
+          collab: { id: Id }, // Collab object reference
+          team: { id: idTeam },
+          date: dateObj,
+          isProposal: isProposal, // Pass the Date object instead of a string
+        });
+      } else if (action === 'add') {
+        // Check if the plan exists before adding
+        const existingPlan = await this.planRepository.findOne({
+          where: { collab: { id: Id }, team: { id: idTeam }, date: dateObj },
+        });
+
+        // If the plan doesn't exist, create and save a new one
+        if (!existingPlan) {
+          const newPlan = this.planRepository.create({
+            collab: { id: Id },
+            date: dateObj, // Pass the Date object instead of a string
+            team: { id: idTeam },
+            isProposal: isProposal, // Assuming `proposal` is a boolean field
+          });
+          await this.planRepository.save(newPlan);
+        }
+      } else {
+        throw new BadRequestException(`Invalid action: ${action}`);
+      }
     }
   }
 }

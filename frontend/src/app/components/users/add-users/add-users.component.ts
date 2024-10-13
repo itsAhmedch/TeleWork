@@ -20,10 +20,10 @@ export class AddUsersComponent {
     });
 
     modalRef.onClose.subscribe((result) => {
-      console.log(result,"dddddddddddddddd");
-      
- 
+      if (result) {
+        
         this.userModified.emit();
+      }
       
      
     });

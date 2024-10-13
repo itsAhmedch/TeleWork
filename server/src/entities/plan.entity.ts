@@ -17,7 +17,7 @@ export class Plan {
   date: Date;
 
   @Column({ type: 'bool' })
-  proposal: boolean;
+  isProposal: boolean;
 
   @ManyToOne(() => User, (user) => user.plans, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idCollab' })

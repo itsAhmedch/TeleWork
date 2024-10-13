@@ -10,6 +10,8 @@ import {
   UseGuards,
   Request,
   ConflictException,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { TeamService } from './../services/Team.service';
 import { CreateTeamDto, UpdateTeamDto } from './../dto/Team.dto';
@@ -110,30 +112,53 @@ export class TeamController {
   update(@Param('id') id: number, @Body() updateTeamDto: UpdateTeamDto) {
     return this.teamService.update(id, updateTeamDto);
   }
-
   @Delete(':id')
   @hasRoles('respo', 'admin')
-  remove(@Request() req: any, @Param('id') id: number) {
-    const token = this.jwtService.verify(req);
-    if (token.role === 'respo') {
-      const team = this.teamRepository.findOne({
-        where: { id: id, responsable: { id: token.sub } },
+
+  
+  async remove(@Req() req: Request, @Param('id') id: number) {
+    const authHeader = req.headers['authorization'];
+    
+    // Ensure the authorization header exists
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header missing');
+    }
+  
+    // Extract token and verify it
+    const token = authHeader.split(' ')[1];
+    console.log(token);
+    
+    let tokenData;
+    try {
+      tokenData = await this.jwtService.decode(token) as any;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  
+    // If the user is a "respo", validate their permissions for the team
+    if (tokenData.role === 'respo') {
+      const team = await this.teamRepository.findOne({
+        where: { id: id, responsable: { id: tokenData.id } }, // Use the correct field from tokenData (id)
         relations: ['responsable'],
       });
+  
       if (!team) {
-        throw new NotFoundException(`team with ID ${id} not found`);
+        throw new NotFoundException(`Team with ID ${id} not found or you are not the responsible person`);
       }
     }
-
-    const user =  this.userRepository.findOne({
-      where: { team: {id} },
+  
+    // Check if there are users in the team
+    const user = await this.userRepository.findOne({
+      where: { team: { id } },
       relations: ['team'],
     });
+  
     if (user) {
-      throw new ConflictException(`you should delete all the users of team before deleting it`);
+      throw new ConflictException('You must delete all users in the team before deleting it');
     }
-
-
-    return this.teamService.remove(id);
+  
+    // Proceed with deletion if all checks pass
+    return await this.teamService.remove(id);
   }
+  
 }

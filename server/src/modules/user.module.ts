@@ -6,13 +6,14 @@ import { User } from 'src/entities/user.entity';
 import { Team } from 'src/entities/team.entity';
 import { authService } from 'src/services/auth.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { TeamService } from 'src/services/Team.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User,Team]), // Register User entity for dependency injection
   ],
   controllers: [UserController],
-  providers: [UserService,JwtService ],
+  providers: [UserService,JwtService,authService ],
   
 })
 export class UserModule {}

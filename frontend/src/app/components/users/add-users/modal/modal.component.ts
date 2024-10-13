@@ -63,7 +63,7 @@ export class ModalComponent implements OnInit {
       idparentTeam: new FormControl('', Validators.required),
       idTeam: new FormControl(
         { value: '', disabled: true },
-        Validators.required
+       
       ),
       role: new FormControl('', Validators.required),
     });
@@ -96,6 +96,12 @@ export class ModalComponent implements OnInit {
   async saveUser() {
     if (this.userForm.valid) {
       const formData = this.userForm.value;
+      formData.idTeam=Number(formData.idTeam)
+      formData.idparentTeam=Number(formData.idparentTeam)
+
+      if (!formData.idTeam){
+        formData.idTeam = formData.idparentTeam
+      }
 
       if (this.editMode) {
         const modifiedFields: any = {};
@@ -108,13 +114,13 @@ export class ModalComponent implements OnInit {
             modifiedFields[key] = currentValue;
           }
         });
-        console.log(this.userData);
-        await this.userService
+   
+        this.userService
           .editUser(modifiedFields, this.userData.id)
           .subscribe(
             (user) => {
-              console.log({ user });
-              this.modalRef.close();
+             
+              this.modalRef.close('edit');
             },
             (error) => {
               this.ErrorMsg = error;
@@ -122,11 +128,13 @@ export class ModalComponent implements OnInit {
             }
           );
       } else {
-        await this.userService.addUser(formData).subscribe(
+        
+      
+        this.userService.addUser(formData).subscribe(
           (user) => {
             console.log({ user });
             // Handle successful response here if needed
-            this.modalRef.close();
+            this.modalRef.close('add');
           },
           (error) => {
             this.ErrorMsg = error;
@@ -215,14 +223,23 @@ export class ModalComponent implements OnInit {
     }
 
     // Call the addTeam method from the TeamsService
-    await this.TeamsService.addTeam(
+    this.TeamsService.addTeam(
       isSubTeam ? this.newSubTeam : this.newTeamName, // Team or Subteam name
       this.myId, // The responsible person's ID
       isSubTeam ? Number(this.selectedTeamId) : null // Parent team ID (if subteam)
     ).subscribe({
-      next: (team) => {
+      next: async (team) => {
         this.teams.push(team);
+        isSubTeam ? this.newSubTeam : this.newTeamName = ''
         // Handle success, reset form or refresh data as needed
+        if (!isSubTeam) {
+          localStorage.removeItem('teams');
+          this.loadTeamsByRespo(this.myId);
+        } else {
+          if (this.selectedTeamId) {
+            await this.loadSubTeamsByRespo(this.myId, this.selectedTeamId);
+          }
+        }
       },
       error: (err) => {
         console.error('Error adding team:', err);
@@ -230,14 +247,7 @@ export class ModalComponent implements OnInit {
       },
     });
 
-    if (!isSubTeam) {
-      localStorage.removeItem('teams');
-      this.loadTeamsByRespo(this.myId);
-    } else {
-      if (this.selectedTeamId) {
-        await this.loadSubTeamsByRespo(this.myId, this.selectedTeamId);
-      }
-    }
+   
   }
   deleteTeam(isSubteam: boolean) {
     let id: number=-1;
@@ -247,13 +257,33 @@ export class ModalComponent implements OnInit {
       if (this.selectedTeamId) {
         id = this.selectedTeamId;
       }
+      else return
     }
     this.TeamsService.deleteTeam(id).subscribe({
-      next: (res) => {
-        this.teams = this.teams.filter((team: any) => team.id !== id);
-        // Handle success, reset form or refresh data as needed
+       next: async (res) => {
+        if (!isSubteam) {
+         
+          localStorage.removeItem('teams');
+          this.loadTeamsByRespo(this.myId);
+          this.selectedTeamId=null
+        } else {
+          
+          if (this.selectedTeamId) {
+            await this.loadSubTeamsByRespo(this.myId, this.selectedTeamId);
+          }
+          this.selectedSubTeamId=null
+        }
+
+        
+    
+        // Log the current state of subTeams to verify
+        console.log('Updated subTeams:', this.subTeams);
+    
+        // Clear the error message and handle success
+        this.ErrorMsg = '';
       },
       error: (err) => {
+        this.ErrorMsg=err
         console.error('Error adding team:', err);
         // Handle error
       },

@@ -5,11 +5,19 @@ import {
   Query,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, FindOptionsWhere, In, Like, Repository } from 'typeorm';
+import {
+  FindManyOptions,
+  FindOptionsWhere,
+  In,
+  Like,
+  Not,
+  Repository,
+} from 'typeorm';
 import { User } from './../entities/user.entity';
 import { CreateUserDto, UpdateUserDto } from '../dto/User.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Team } from 'src/entities/team.entity';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -22,17 +30,19 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      console.log(createUserDto);
-   
-      const team = await this.teamRepository.findOne({ where: { id: createUserDto.idTeam } });
+      
+
+      const team = await this.teamRepository.findOne({
+        where: { id: createUserDto.idTeam },
+      });
       if (!team) {
         throw new BadRequestException('Team not found');
-}
+      }
       // Create the user entity and set the team
-    const user = this.userRepository.create({
-      ...createUserDto,
-      team: team?team:null, // Set the found team here
-    });
+      const user = this.userRepository.create({
+        ...createUserDto,
+        team: team ? team : null, // Set the found team here
+      });
       return await this.userRepository.save(user);
     } catch (error) {
       console.log(error);
@@ -52,7 +62,7 @@ export class UserService {
           'serviceName',
           'team',
         ], // Add other fields you need, except 'pwd'
-        relations: ['team'], 
+        relations: ['team'],
       });
     } catch (error) {
       console.log(error);
@@ -63,47 +73,56 @@ export class UserService {
     token: string,
     search?: string,
     page: number = 1, // Default value for page
-    limit: number = 10 // Default value for limit
+    limit: number = 10, // Default value for limit
   ): Promise<{ users: any[]; total: number }> {
     // Decode the JWT token to extract the respoId
-    const decodedToken = await this.jwtService.decode(token) as any;
+    const decodedToken = (await this.jwtService.decode(token)) as any;
     const respoId = decodedToken.id;
-  
+
     // Fetch teams where the responsible user is the specified respo
     const teams = await this.teamRepository.find({
       where: { responsable: { id: respoId } },
       relations: ['childTeams'],
     });
-  
-    const teamIds = teams.map(team => team.id);
-  
+
+    const teamIds = teams.map((team) => team.id);
+
     // If no teams found, return early with empty result
     if (teamIds.length === 0) {
       return { users: [], total: 0 };
     }
-  
+
     // Fetch users based on team IDs
     const usersInTeams = await this.userRepository.find({
       where: { team: In(teamIds) },
       relations: ['team'],
     });
-  
-    const userIds = usersInTeams.map(user => user.id);
-  
+
+    const userIds = usersInTeams.map((user) => user.id);
+
     // Return early if no users found
     if (userIds.length === 0) {
       return { users: [], total: 0 };
     }
-  
+
     // Set up the find options for filtering and pagination
     const findOptions: FindManyOptions<User> = {
       where: { id: In(userIds) }, // Only get users that are in the userIds
       skip: (page - 1) * limit,
       take: limit,
-      select: ['id', 'cin', 'email', 'name', 'lastName', 'role', 'serviceName', 'team'],
+      select: [
+        'id',
+        'cin',
+        'email',
+        'name',
+        'lastName',
+        'role',
+        'serviceName',
+        'team',
+      ],
       relations: ['team', 'team.parentTeam'], // Specify the relation to be included
     };
-  
+
     // If a search term is provided, filter users by various fields
     if (search) {
       findOptions.where = [
@@ -112,15 +131,18 @@ export class UserService {
         { id: In(userIds), lastName: Like(`%${search}%`) },
         { id: In(userIds), cin: Like(`%${search}%`) },
         { id: In(userIds), team: { name: Like(`%${search}%`) } },
-        { id: In(userIds), team: { parentTeam: { name: Like(`%${search}%`) } } },
+        {
+          id: In(userIds),
+          team: { parentTeam: { name: Like(`%${search}%`) } },
+        },
       ] as FindOptionsWhere<User>[];
     }
-  
+
     // Retrieve users and total count for pagination
     const [users, total] = await this.userRepository.findAndCount(findOptions);
-  
+
     // Map the result to ensure a clear format
-    const result = users.map(user => ({
+    const result = users.map((user) => ({
       id: user.id,
       cin: user.cin,
       email: user.email,
@@ -128,13 +150,107 @@ export class UserService {
       lastName: user.lastName,
       role: user.role,
       team: user.team ? user.team.name : null,
-      parentTeam: user.team && user.team.parentTeam ? user.team.parentTeam.name : null,
+      parentTeam:
+        user.team && user.team.parentTeam ? user.team.parentTeam.name : null,
     }));
-  
+    
+
     return { users: result, total };
   }
+
+  async getRespo() {
+    //fetch responsibles
+    const respos = await this.userRepository.find({
+      where: { role: 'respo' },
+    });
+
+    const result = respos.map((user) => ({
+      id: user.id,
+      fullname: user.name + ' ' + user.lastName,
+    }));
+    
+
+    return result;
+  }
+
+
+  async getcollabsNames(idRespo: number, teamId: number | null) {
+    
+    console.log(teamId,'fffffffff');
+    
+    let users :any;
+     let result = [];
+    if (teamId != -1){
+
+      // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
+      users = await this.userRepository.find({
+          where: {
+          
+              role: In(['collab', 'leader']),
+              team: {id:teamId, responsable: { id: idRespo } },
+          },
+          relations: ['team', 'team.responsable'],
+      });
   
   
+      // Check if the specified team has child teams
+      const hasChildTeams = await this.teamRepository.find({
+          where: {
+              id: Not(teamId),
+              responsable: { id: idRespo },
+              parentTeam: { id: teamId },
+          },
+          relations: ['parentTeam', 'childTeams'],
+      });
+  
+      if (hasChildTeams.length > 0) {
+          // If there are child teams, fetch users from each child team
+          for (const team of hasChildTeams) {
+              const childTeamUsers = await this.userRepository.find({
+                  where: {
+                      role: In(['collab', 'leader']),
+                      team: { id: team.id },
+                  },
+                  relations: ['team', 'team.responsable'],
+              });
+  
+              // Map the child team users to the desired format and track unique IDs
+              for (const user of childTeamUsers) {
+                  
+                      result.push({
+                          id: user.id,
+                          fullname: `${user.name} ${user.lastName}`,
+                          cin: user.cin,
+                      });
+                  
+              }
+          }
+      }
+    }
+    else{
+      // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
+      users = await this.userRepository.find({
+        where: {
+        
+            role: In(['collab', 'leader']),
+            team: { responsable: { id: idRespo } },
+        },
+        relations: ['team', 'team.responsable'],
+    });
+    }
+      // Map the users to the desired format and track unique IDs
+      for (const user of users) {
+          
+        result.push({
+            id: user.id,
+            fullname: `${user.name} ${user.lastName}`,
+            cin: user.cin,
+        });
+    
+}   
+     
+     return result;
+ }
 
   async findOne(id: number): Promise<any> {
     try {
@@ -171,6 +287,15 @@ export class UserService {
 
       if (!existingUser) {
         throw new NotFoundException(`User  not found`);
+      }
+
+      if (updateUserDto.role && updateUserDto.role === 'leader') {
+        const leader = await this.userRepository.findOneBy({
+          team: { id: existingUser.team.id },
+        });
+        if (!leader) {
+          throw new NotFoundException(`This team had a leader`);
+        }
       }
 
       const updatedUser = this.userRepository.create({
