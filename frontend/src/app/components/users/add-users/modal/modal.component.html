@@ -108,6 +108,17 @@
           </div>
         </div>
 
+
+        <div class="form-group mb-3">
+          <label for="roleSelect">Select Role</label>
+          <select formControlName="role" id="roleSelect" class="form-control">
+            <option>collab</option>
+            <option>leader</option>
+            <option *ngIf="role == 'admin'" value="respo">responsable</option>
+          </select>
+        </div>
+
+
         <div class="form-group" *ngIf="!editMode">
           <label for="teamSelect">Select Team</label>
           <div class="d-flex align-items-center">
@@ -215,15 +226,7 @@
           </div>
         </div>
 
-        <div class="form-group mb-3">
-          <label for="roleSelect">Select Role</label>
-          <select formControlName="role" id="roleSelect" class="form-control">
-            <option>collab</option>
-            <option>leader</option>
-            <option *ngIf="role == 'admin'">responsable</option>
-          </select>
-        </div>
-
+        
         <small class="error-message"> {{ ErrorMsg }}</small>
       </form>
     </div>

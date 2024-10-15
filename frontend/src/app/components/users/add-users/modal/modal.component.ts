@@ -70,6 +70,7 @@ export class ModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
     const tokenData = this.AuthService.getTokenData();
     this.myId = tokenData.id;
     this.role = tokenData.role;
@@ -82,6 +83,10 @@ export class ModalComponent implements OnInit {
       this.userForm.patchValue(this.userData);
       this.checkEditValidators();
     }
+
+    this.userForm.get('role')?.valueChanges.subscribe((role) => {
+      this.toggleTeamFields(role);
+    });
   }
 
   checkEditValidators() {
@@ -93,13 +98,33 @@ export class ModalComponent implements OnInit {
     });
   }
 
+
+
+  toggleTeamFields(role: string) {
+    const teamControl = this.userForm.get('idparentTeam');
+    const subTeamControl = this.userForm.get('idTeam');
+    
+    if (role === 'respo') {
+      teamControl?.disable(); // Disable the team field
+      subTeamControl?.disable(); // Disable the subteam field
+      teamControl?.setValidators([]); // Make team field optional
+      subTeamControl?.setValidators([]); // Make subteam field optional
+    } else {
+      teamControl?.enable(); // Enable the team field
+      subTeamControl?.enable(); // Enable the subteam field
+      teamControl?.setValidators([Validators.required]); // Add validation back if needed
+      subTeamControl?.setValidators([Validators.required]); // Add validation back if needed
+    }
+    teamControl?.updateValueAndValidity(); // Update the validity state
+    subTeamControl?.updateValueAndValidity(); // Update the validity state
+  }
   async saveUser() {
     if (this.userForm.valid) {
       const formData = this.userForm.value;
       formData.idTeam=Number(formData.idTeam)
       formData.idparentTeam=Number(formData.idparentTeam)
 
-      if (!formData.idTeam){
+      if (!formData.idTeam && this.userForm.get('role')?.value !="respo"){
         formData.idTeam = formData.idparentTeam
       }
 

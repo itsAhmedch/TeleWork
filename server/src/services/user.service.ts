@@ -30,8 +30,6 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      
-
       const team = await this.teamRepository.findOne({
         where: { id: createUserDto.idTeam },
       });
@@ -41,8 +39,12 @@ export class UserService {
       // Create the user entity and set the team
       const user = this.userRepository.create({
         ...createUserDto,
-        team: team ? team : null, // Set the found team here
+        team:
+          createUserDto.role === 'collab' || createUserDto.role === 'leader'
+            ? team
+            : null, // Set the found team here
       });
+
       return await this.userRepository.save(user);
     } catch (error) {
       console.log(error);
@@ -77,32 +79,53 @@ export class UserService {
   ): Promise<{ users: any[]; total: number }> {
     // Decode the JWT token to extract the respoId
     const decodedToken = (await this.jwtService.decode(token)) as any;
-    const respoId = decodedToken.id;
+    let MyId = [decodedToken.id]; // Initialize with the decoded user ID
+    const role = decodedToken.role;
+    let userIds: number[] = []; // Initialize userIds as an empty array
+    let respoIds = [];
+    console.log(respoIds);
+
+    if (role === 'admin') {
+      // Fetch users based on role 'respo'
+      const respoUsers = await this.userRepository.find({
+        where: { role: 'respo' },
+        relations: ['team'],
+        select: ['id'], // Keep only the ID here
+      });
+
+      // Map the result to get only the IDs
+      respoIds = respoUsers.map((user) => user.id);
+      // Combine the initial respoId with those fetched for admins
+      userIds = Array.from(new Set([...userIds, ...respoIds])); // Remove duplicates
+    }
+    if (respoIds.length === 0) {
+      respoIds = MyId;
+    }
 
     // Fetch teams where the responsible user is the specified respo
     const teams = await this.teamRepository.find({
-      where: { responsable: { id: respoId } },
+      where: { responsable: { id: In(respoIds) } },
       relations: ['childTeams'],
     });
 
     const teamIds = teams.map((team) => team.id);
 
     // If no teams found, return early with empty result
-    if (teamIds.length === 0) {
-      return { users: [], total: 0 };
+    if (teamIds.length !== 0) {
+      // Fetch users based on team IDs
+      const usersInTeams = await this.userRepository.find({
+        where: { team: In(teamIds) },
+        relations: ['team'],
+      });
+
+      // Collect user IDs from usersInTeams
+      userIds = Array.from(
+        new Set([...userIds, ...usersInTeams.map((user) => user.id)]),
+      ); // Combine and remove duplicates
     }
 
-    // Fetch users based on team IDs
-    const usersInTeams = await this.userRepository.find({
-      where: { team: In(teamIds) },
-      relations: ['team'],
-    });
-
-    const userIds = usersInTeams.map((user) => user.id);
-
-    // Return early if no users found
     if (userIds.length === 0) {
-      return { users: [], total: 0 };
+      return { users: [], total: 0 }; // Return early if no users found
     }
 
     // Set up the find options for filtering and pagination
@@ -153,7 +176,6 @@ export class UserService {
       parentTeam:
         user.team && user.team.parentTeam ? user.team.parentTeam.name : null,
     }));
-    
 
     return { users: result, total };
   }
@@ -168,89 +190,119 @@ export class UserService {
       id: user.id,
       fullname: user.name + ' ' + user.lastName,
     }));
-    
 
     return result;
   }
 
-
   async getcollabsNames(idRespo: number, teamId: number | null) {
-    
-    console.log(teamId,'fffffffff');
-    
-    let users :any;
-     let result = [];
-    if (teamId != -1){
+    console.log(teamId, 'fffffffff');
 
-      // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
-      users = await this.userRepository.find({
-          where: {
-          
-              role: In(['collab', 'leader']),
-              team: {id:teamId, responsable: { id: idRespo } },
-          },
-          relations: ['team', 'team.responsable'],
-      });
-  
-  
-      // Check if the specified team has child teams
-      const hasChildTeams = await this.teamRepository.find({
-          where: {
-              id: Not(teamId),
-              responsable: { id: idRespo },
-              parentTeam: { id: teamId },
-          },
-          relations: ['parentTeam', 'childTeams'],
-      });
-  
-      if (hasChildTeams.length > 0) {
-          // If there are child teams, fetch users from each child team
-          for (const team of hasChildTeams) {
-              const childTeamUsers = await this.userRepository.find({
-                  where: {
-                      role: In(['collab', 'leader']),
-                      team: { id: team.id },
-                  },
-                  relations: ['team', 'team.responsable'],
-              });
-  
-              // Map the child team users to the desired format and track unique IDs
-              for (const user of childTeamUsers) {
-                  
-                      result.push({
-                          id: user.id,
-                          fullname: `${user.name} ${user.lastName}`,
-                          cin: user.cin,
-                      });
-                  
-              }
-          }
-      }
-    }
-    else{
+    let users: any;
+    let result = [];
+    if (teamId != -1) {
       // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
       users = await this.userRepository.find({
         where: {
-        
-            role: In(['collab', 'leader']),
-            team: { responsable: { id: idRespo } },
+          role: In(['collab', 'leader']),
+          team: { id: teamId, responsable: { id: idRespo } },
         },
         relations: ['team', 'team.responsable'],
-    });
+      });
+
+      // Check if the specified team has child teams
+      const hasChildTeams = await this.teamRepository.find({
+        where: {
+          id: Not(teamId),
+          responsable: { id: idRespo },
+          parentTeam: { id: teamId },
+        },
+        relations: ['parentTeam', 'childTeams'],
+      });
+
+      if (hasChildTeams.length > 0) {
+        // If there are child teams, fetch users from each child team
+        for (const team of hasChildTeams) {
+          const childTeamUsers = await this.userRepository.find({
+            where: {
+              role: In(['collab', 'leader']),
+              team: { id: team.id },
+            },
+            relations: ['team', 'team.responsable'],
+          });
+
+          // Map the child team users to the desired format and track unique IDs
+          for (const user of childTeamUsers) {
+            result.push({
+              id: user.id,
+              fullname: `${user.name} ${user.lastName}`,
+              cin: user.cin,
+            });
+          }
+        }
+      }
+    } else {
+      // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
+      users = await this.userRepository.find({
+        where: {
+          role: In(['collab', 'leader']),
+          team: { responsable: { id: idRespo } },
+        },
+        relations: ['team', 'team.responsable'],
+      });
     }
-      // Map the users to the desired format and track unique IDs
-      for (const user of users) {
-          
-        result.push({
-            id: user.id,
-            fullname: `${user.name} ${user.lastName}`,
-            cin: user.cin,
-        });
-    
-}   
-     
-     return result;
- }
+    // Map the users to the desired format and track unique IDs
+    for (const user of users) {
+      result.push({
+        id: user.id,
+        fullname: `${user.name} ${user.lastName}`,
+        cin: user.cin,
+      });
+    }
+
+    return result;
+  }
+  async getAllcollabsNames() {
+    let result = [];
+    // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
+    const users = await this.userRepository.find({
+      where: {
+        role: In(['collab', 'leader']),
+      },
+      relations: ['team', 'team.responsable'],
+    });
+
+    // Map the users to the desired format and track unique IDs
+    for (const user of users) {
+      result.push({
+        id: user.id,
+        fullname: `${user.name} ${user.lastName}`,
+        cin: user.cin,
+      });
+    }
+
+    return result;
+  }
+  async TeamNames(idTeam:number) {
+    let result = [];
+    // Fetch users with roles 'collab' or 'leader' associated with the specified responsable
+    const users = await this.userRepository.find({
+      where: {
+        team:{id:idTeam}
+      },
+      relations: ['team'],
+    });
+
+    // Map the users to the desired format and track unique IDs
+    for (const user of users) {
+      result.push({
+        id: user.id,
+        fullname: `${user.name} ${user.lastName}`,
+        cin: user.cin,
+      });
+    }
+
+    return result;
+  }
 
   async findOne(id: number): Promise<any> {
     try {

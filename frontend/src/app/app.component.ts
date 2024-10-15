@@ -4,6 +4,8 @@ import { RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
@@ -12,7 +14,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
   imports: [
     RouterOutlet,
     HttpClientModule,
-    NgxPermissionsModule // Include this if you're using ngx-permissions
+    NgxPermissionsModule, // Include this if you're using ngx-permissions
+    CommonModule, FormsModule
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

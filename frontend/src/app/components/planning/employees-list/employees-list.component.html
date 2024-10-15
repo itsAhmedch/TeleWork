@@ -1,36 +1,35 @@
 <form [formGroup]="employeesForm"> <!-- Bind the formGroup -->
-    <div class="form-group mb-0 form-group-custom">
-      <div class="row">
-        <!-- First dropdown: Responsible -->
-        <div class="col-12 mb-1">
-          <select formControlName="responsible"  class="form-control" (change)="onRespoChange()">
-       
-            <option *ngFor="let responsible of responsibles" [value]="responsible.id">
-              {{ responsible.fullname }}
-            </option>
-          </select>
-        </div>
-  
-        <!-- Second dropdown: Teams -->
-        <div class="col-12 mb-1">
-          <select formControlName="team"  class="form-control" (change)="onTeamChange(false)">
-         
-            <option *ngFor="let Team of Teams" [value]="Team.id">
-              {{ Team.name }}
-            </option>
-          </select>
-        </div>
-  
-        <!-- Third dropdown: Subteams -->
-        <div class="col-12 mb-1">
-          <select formControlName="subTeam"  class="form-control" (change)="onTeamChange(true)">
-        
-            <option *ngFor="let subTeam of subTeams" [value]="subTeam.id">
-              {{ subTeam.name }}
-            </option>
-          </select>
-        </div>
+  <div class="form-group mb-0 form-group-custom">
+    <div class="row">
+      <!-- Responsible dropdown -->
+      <div class="col-12 mb-1">
+        <select formControlName="responsible" class="form-control" *ngIf="role === 'admin'" (change)="onRespoChange()">
+          <option value="">All Responsibles</option> <!-- 'All' option -->
+          <option *ngFor="let responsible of responsibles" [value]="responsible.id">
+            {{ responsible.fullname }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Team dropdown -->
+      <div class="col-12 mb-1">
+        <select formControlName="team" class="form-control" *ngIf="role === 'respo' || role === 'admin'" (change)="onTeamChange(false)">
+          <option value="">All Teams</option> <!-- 'All' option -->
+          <option *ngFor="let team of teams" [value]="team.id">
+            {{ team.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Subteam dropdown -->
+      <div class="col-12 mb-1">
+        <select formControlName="subTeam" class="form-control" *ngIf="role === 'respo' || role === 'admin'" (change)="onTeamChange(true)">
+          <option value="">All Subteams</option> <!-- 'All' option -->
+          <option *ngFor="let subTeam of subTeams" [value]="subTeam.id">
+            {{ subTeam.name }}
+          </option>
+        </select>
       </div>
     </div>
-  </form>
-  
+  </div>
+</form>

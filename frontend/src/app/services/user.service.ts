@@ -95,10 +95,29 @@ export class UserService {
   }
 
   
-  getCollabsNames(idRespo: number, idTeam: number): Observable<Employee[]> {
+  getCollabsNames(idRespo: number, idTeam: number,getAll:boolean): Observable<Employee[]> {
     console.log(idRespo,"  ",idTeam),'ddddddddddddddddd';
+    let url:string;
+    if (getAll) {
+      url=`${this.apiUrl}/user/get-collabs-Names/`
+    }
+    else{
+      url=`${this.apiUrl}/user/get-collabs-Names/${idRespo}/${idTeam}`
+    }
+    return this.http.get<Employee[]>(url).pipe(
+      catchError((error) => {
+        console.error('Error fetching responsibles:', error);
+        return throwError(() => new Error('Error fetching responsibles'));
+      })
+    );
+  }
+  getMyTeamNames(): Observable<Employee[]> {
     
-    return this.http.get<Employee[]>(`${this.apiUrl}/user/get-collabs-Names/${idRespo}/${idTeam}`).pipe(
+ 
+      const url=`${this.apiUrl}/user/TeamNames/`
+  
+    
+    return this.http.get<Employee[]>(url).pipe(
       catchError((error) => {
         console.error('Error fetching responsibles:', error);
         return throwError(() => new Error('Error fetching responsibles'));

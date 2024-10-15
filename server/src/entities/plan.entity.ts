@@ -4,17 +4,18 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { User } from './user.entity';
-
+@Unique(['collab', 'team', 'date', 'isProposal']) // Add a unique constraint here
 @Entity()
 export class Plan {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'date' })
-  date: Date;
+  @Column({  })
+  date: string;
 
   @Column({ type: 'bool' })
   isProposal: boolean;

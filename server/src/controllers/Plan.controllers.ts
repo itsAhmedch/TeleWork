@@ -24,29 +24,29 @@ export class PlanController {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  @Post()
-  @hasRoles('respo','admin','leader')
-  async create(@Body() createPlanDto: CreatePlanDto): Promise<Plan> {
-    // Check if the team exists
-    const team = await this.teamRepository.findOne({ where: { id: createPlanDto.idTeam } });
-    if (!team) {
-      throw new NotFoundException(`Team with ID ${createPlanDto.idTeam} not found`);
-    }
+  // @Post()
+  // @hasRoles('respo','admin','leader')
+  // async create(@Body() createPlanDto: CreatePlanDto): Promise<Plan> {
+    // // Check if the team exists
+    // const team = await this.teamRepository.findOne({ where: { id: createPlanDto.idTeam } });
+    // if (!team) {
+    //   throw new NotFoundException(`Team with ID ${createPlanDto.idTeam} not found`);
+    // }
 
-    // Check if the collaborator (collab) exists
-    const collab = await this.userRepository.findOne({ where: { id: createPlanDto.idCollab } });
-    if (!collab) {
-      throw new NotFoundException(`Collaborator with ID ${createPlanDto.idCollab} not found`);
-    }
+    // // Check if the collaborator (collab) exists
+    // const collab = await this.userRepository.findOne({ where: { id: createPlanDto.idCollab } });
+    // if (!collab) {
+    //   throw new NotFoundException(`Collaborator with ID ${createPlanDto.idCollab} not found`);
+    // }
 
-    return this.planService.create(createPlanDto,team,collab);
-  }
+    // return this.planService.create(createPlanDto,team,collab);
+  // }
   @Post('SavePlan/:respo')
   @hasRoles('respo','admin','leader')
   async savePlan(
     @Req() req: Request,
     @Param('respo') idSender: number,
-    @Body() { planChanges }: { planChanges: { Id: number; dates: string; action: string }[] } // Destructure to directly get planChanges
+    @Body() { planChanges }: { planChanges: { CollabId: number; date: string; action: string }[] } // Destructure to directly get planChanges
   ): Promise<{ message: string }> {
     const token = await this.authService.decode(req);
     const userId = token.id;
@@ -54,11 +54,11 @@ export class PlanController {
 
    
     // Check if the role is 'respo' or 'leader' and ensure the user is authorized to act for the given respo
-    if (['respo', 'leader'].includes(role) && idSender !== userId) {
+    if (['respo', 'leader'].includes(role) && idSender != userId) {
       throw new ForbiddenException(`You are not allowed to perform this action`);
     }
 
-    const isProposal = role === 'leader'; // Using a simple conditional assignment
+    const isProposal = role == 'leader'; // Using a simple conditional assignment
 
     // Delegate the plan changes to the service
     await this.planService.processPlanChanges(planChanges, isProposal);
@@ -76,12 +76,14 @@ export class PlanController {
     const role = token.role;
 
     // Check if the role is 'respo' or 'leader' and ensure the user is authorized to act for the given respo
-    if (['respo', 'leader'].includes(role) && idSender !== userId) {
+    if (['respo', 'leader'].includes(role) && idSender != userId) {
+
       throw new ForbiddenException(`You are not allowed to perform this action`);
     }
 
     
-
+    console.log(idsTeams,'fffffffffffffff');
+    
     return this.planService.getPlans(idsTeams,isProposal);
   }
 
@@ -105,11 +107,16 @@ export class PlanController {
 
 
 
-  @Get('/ByTeam/:id')
-  @hasRoles('respo','admin','leader')
-  findByTeam(@Param('id') id: number): Promise<Plan[]> {
-    return this.planService.findByTeam(id);
+  @Get('/LeaderTeam')
+  @hasRoles('leader')
+  async findByTeam(@Req() req: Request): Promise<any[]> {
+    console.log("Log from findByTeam"); // This should log
+    const token = await this.authService.decode(req);
+    const IdTeam = token.idTeam; // You are getting the team ID from the token
+    return this.planService.findByTeam(IdTeam); // Ensure this is the correct method
   }
+  
+
 
   @Delete(':id')
   @hasRoles('respo','admin','leader')

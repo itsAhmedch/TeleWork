@@ -1,0 +1,61 @@
+.calendar-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    width: 300px; // Set your desired width
+  }
+  
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .nav-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 10px;
+  }
+  
+  .week-days {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .week-day {
+    width: 14.28%; // For 7 days of the week
+    text-align: center;
+  }
+  
+  .dates {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .date-cell {
+    width: 14.28%; // Adjust based on the number of days per week
+    text-align: center;
+    padding: 5px;
+    position: relative;
+  }
+  
+  .date-number {
+    display: block;
+    font-size: 16px;
+  }
+  
+  .week-number {
+    font-size: 12px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    padding: 2px 5px;
+  }
+  

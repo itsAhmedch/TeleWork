@@ -72,8 +72,9 @@ export class UserController {
       if (createUserDto.idTeam) {
         const leader = await this.userRepository.findOneBy({
           team: { id: createUserDto.idTeam },
+          role:'leader'
         });
-        if (!leader) {
+        if (leader) {
           throw new NotFoundException(`This team had a leader`);
         }
       } else throw new NotFoundException(`idTeam should not be empty`);
@@ -99,7 +100,8 @@ export class UserController {
     if (!token) {
       throw new UnauthorizedException('Token is required');
     }
-
+    
+    
     const { users, total } = await this.userService.getUsersByRespo(
       token.split(' ')[1], // Remove 'Bearer ' prefix
       search,
@@ -121,15 +123,31 @@ async getcollabsNames(@Req() req: Request, @Param('idRespo') idRespo: number, @P
   const token = await this.authService.decode(req)
   const respoId = token.id; 
 
-  console.log(team);
+
   
   const userRole = token.role; 
-
-  if (userRole === 'respo' && respoId !== idRespo) {
+  
+  
+  if (userRole === 'respo' && respoId != idRespo) {
+    console.log('fffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+    
     throw new ForbiddenException('You are not allowed to access this resource.'); 
   }
 
   return await this.userService.getcollabsNames(idRespo, team );
+}
+@Get('get-collabs-Names/')
+@hasRoles('admin')
+async getAllcollabsNames() {
+
+  return await this.userService.getAllcollabsNames();
+}
+@Get('TeamNames/')
+@hasRoles('leader')
+async TeamNames(@Req() req: Request) {
+  const token = await this.authService.decode(req)
+  const teamId = token.idTeam
+  return await this.userService.TeamNames(teamId);
 }
 
   @Get(':id')

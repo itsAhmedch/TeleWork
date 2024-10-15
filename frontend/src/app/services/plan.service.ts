@@ -22,7 +22,7 @@ export class planService {
 
   savePlan(
     idSender: number,
-    planChanges: { Id: number; dates: string; action: string }[]
+    planChanges: { CollabId: number; date: string; action: string }[]
   ): Observable<any> {
     const url = `${this.apiUrl}/plan/SavePlan/${idSender}`;
 
@@ -34,21 +34,37 @@ export class planService {
     return this.http.post<any>(url, body);
   }
 
-  getPlans(idSender: number, idsTeams: number[], isProposal: boolean) {
-    // Construct the URL with the sender ID only
-    const url = `${this.apiUrl}/plan/get-Plans/${idSender}`;
-    
-    // Create the request body with the isProposal and idsTeams array
-    const body = { 
+  getPlans(
+    idSender: number,
+    idsTeams: number[],
+    isProposal: boolean,
+    getAll: boolean
+  ) {
+    let url;
+    if (getAll) {
+      url = `${this.apiUrl}/plan/`;
+
+      return this.http.get<any>(url);
+    } else {
+      // Construct the URL with the sender ID only
+      url = `${this.apiUrl}/plan/get-Plans/${idSender}`;
+      // Create the request body with the isProposal and idsTeams array
+      const body = {
         isProposal,
-        idsTeams // Include the idsTeams in the request body
-    };
-  
-    // Use POST to send the body
-    return this.http.post<any>(url, body); // Use POST instead of GET
-}
+        idsTeams, // Include the idsTeams in the request body
+      };
 
+      // Use POST to send the body
+      return this.http.post<any>(url, body); // Use POST instead of GET
+    }
+  }
+  getAllPlans() {
+    const url = `${this.apiUrl}/plan/`;
 
-  
-  
-}
+    return this.http.get(url);
+  }
+  getLeaderTeamPlan() {
+    const url = `${this.apiUrl}/plan/LeaderTeam`;
+    return this.http.get<any>(url); 
+  }
+}  
