@@ -9,8 +9,6 @@ import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
-import { jwtDecode } from './jwtDecode.service';
-import { firstValueFrom } from 'rxjs'; // Import for converting Observable to Promise
 
 @Injectable({
   providedIn: 'root',
@@ -40,31 +38,24 @@ export class planService {
     isProposal: boolean,
     getAll: boolean
   ) {
-    let url;
+    let url: string;
+    
     if (getAll) {
       url = `${this.apiUrl}/plan/`;
-
-      return this.http.get<any>(url);
+      return this.http.post(url, { isProposal }); // Send isProposal only
     } else {
-      // Construct the URL with the sender ID only
       url = `${this.apiUrl}/plan/get-Plans/${idSender}`;
-      // Create the request body with the isProposal and idsTeams array
       const body = {
         isProposal,
-        idsTeams, // Include the idsTeams in the request body
+        idsTeams, // Include idsTeams in the request body
       };
-
-      // Use POST to send the body
-      return this.http.post<any>(url, body); // Use POST instead of GET
+      return this.http.post<any>(url, body); // Send the full body
     }
   }
-  getAllPlans() {
-    const url = `${this.apiUrl}/plan/`;
-
-    return this.http.get(url);
-  }
-  getLeaderTeamPlan() {
+  
+  
+  getLeaderTeamPlan():any {
     const url = `${this.apiUrl}/plan/LeaderTeam`;
-    return this.http.get<any>(url); 
+    return this.http.get(url); 
   }
 }  

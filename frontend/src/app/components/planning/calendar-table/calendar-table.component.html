@@ -13,6 +13,7 @@
       (employeesEvent)="handleEmployees($event)"
       (respoEvent)="getRespoId($event)"
       (workingsDaysEvent)="getWorkingDays($event)"
+      (getproposalDayEvent)="getproposalDay($event)"
     >
     </app-employees-list>
 
@@ -40,7 +41,7 @@
 
   <!-- Schedule table for the full month (Desktop) -->
   <div class="table-responsive d-none d-md-block">
-    <table class="table table-bordered">
+    <table class="table table-bordered" style="table-layout: fixed">
       <thead>
         <tr>
           <th
@@ -51,12 +52,18 @@
               z-index: 1;
               min-width: 150px;
               border-top: none;
+              width: 150px; /* Fixed width */
             "
           ></th>
 
           <th
             *ngFor="let day of daysInMonth"
-            [ngClass]="{ weekend: day.isWeekend, 'normal-day': !day.isWeekend }"
+            [ngClass]="{
+              weekend: day.isWeekend,
+              'normal-day': !day.isWeekend,
+              'today-header': isToday(day.date)
+            }"
+            style="width: 100px; /* Fixed width for each day column */"
           >
             {{ day.date.format("DD") }}<br />
             {{ day.date.format("ddd") }}
@@ -71,27 +78,32 @@
               left: 0;
               background: white;
               z-index: 1;
-              width: 150px;
+              width: 150px; /* Fixed width */
+              height: 50px; /* Fixed height */
             "
-            
           >
-          <div
-          style="display: flex; flex-direction: column; align-items: center"
-        >
-          <span>{{ employee.fullname }}</span>
-          <span style="font-size: smaller; color: gray"
-            >(cin: {{ employee.cin }})</span
-          >
-        </div>
+            <div
+              style="display: flex; flex-direction: column; align-items: center"
+            >
+              <span>{{ employee.fullname }}</span>
+              <span style="font-size: smaller; color: gray"
+                >(cin: {{ employee.cin }})</span
+              >
+            </div>
           </td>
           <td
             *ngFor="let day of daysInMonth"
-            style="cursor: pointer"
+            style="cursor: pointer; width: 100px; height: 50px"
             class="day"
             [class.weekend]="day.isWeekend"
             [ngClass]="{ 'working-day': isChoosingDay(employee.id, day.date) }"
             (click)="!day.isWeekend ? toggleShift(employee.id, day.date) : null"
-          ></td>
+          >
+            <span
+              *ngIf="isProposelDay(employee.id, day.date)"
+              class="proposal-dot"
+            ></span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -122,7 +134,7 @@
 
   <!-- Schedule table for the weekdays only (Mobile) -->
   <div class="table-responsive d-md-none">
-    <table class="table table-bordered">
+    <table class="table table-bordered" style="table-layout: fixed">
       <thead>
         <tr>
           <th
@@ -132,13 +144,22 @@
               background: white;
               z-index: 1;
               min-width: 100px;
+              width: 150px; /* Fixed width for employee column */
             "
           >
             Employees
           </th>
           <th
-            *ngFor="let day of daysInWeek"
-            [ngClass]="{ weekend: day.isWeekend, 'normal-day': !day.isWeekend }"
+            *ngFor="let day of daysInWeek; let i = index"
+            [ngClass]="{
+              weekend: day.isWeekend,
+              'normal-day': !day.isWeekend,
+              'today-header': isToday(day.date)
+            }"
+            style="
+              width: calc((100vw - 150px) / 7); /* Adjust width for 5 days */
+              height: 50px; /* Fixed height */
+            "
           >
             {{ day.date.format("DD") }}<br />
             {{ day.date.format("ddd") }}
@@ -153,7 +174,8 @@
               left: 0;
               background: white;
               z-index: 1;
-              width: 150px;
+              width: 100px; /* Fixed width */
+              height: 50px; /* Fixed height */
             "
           >
             <div
@@ -167,9 +189,15 @@
           </td>
           <td
             *ngFor="let day of daysInWeek"
+            style="width: calc((100vw - 150px) / 7); height: 50px"
             [ngClass]="{ 'working-day': isChoosingDay(employee.id, day.date) }"
             (click)="!day.isWeekend ? toggleShift(employee.id, day.date) : null"
-          ></td>
+          >
+            <span
+              *ngIf="isProposelDay(employee.id, day.date)"
+              class="proposal-dot"
+            ></span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -180,8 +208,19 @@
     class="fixed-bottom d-flex justify-content-end bg-light p-3"
     style="z-index: 1000"
   >
-    <button class="btn btn-success me-2" (click)="showProposal()">
+    <button
+      class="btn btn-primary me-2"
+      (click)="showProposalFunc()"
+      [ngClass]="{ 'btn-success': showProposal }"
+    >
       Show Proposal
+    </button>
+    <button
+      class="btn btn-danger me-2"
+      (click)="emptySavePlans()"
+      *ngIf="planChanges.length > 0"
+    >
+      Discard changes
     </button>
     <button
       class="btn btn-primary"

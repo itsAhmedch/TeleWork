@@ -31,7 +31,6 @@ export class PlanService {
     //     team,
     //     collab,
     //   });
-
     //   return this.planRepository.save(plan);
     // } catch (error) {
     //   console.log(error);
@@ -39,20 +38,21 @@ export class PlanService {
     // }
   }
 
-  async findAll(): Promise<any[]> {
+  async findAll(isproposal: boolean): Promise<any[]> {
     try {
-      const plans= await this.planRepository.find({ relations: ['team', 'collab'] });
+      const plans = await this.planRepository.find({
+        where: { isProposal: isproposal },
+        relations: ['team', 'collab'],
+      });
 
-       // After fetching, map to extract only the necessary fields
-    const result = plans.map(plan => ({
-      date: plan.date,
-      CollabId: plan.collab.id, // Extract the 'collab' id
-      isProposal:plan.isProposal
-      
-    }));
+      // After fetching, map to extract only the necessary fields
+      const result = plans.map((plan) => ({
+        date: plan.date,
+        CollabId: plan.collab.id, // Extract the 'collab' id
+        isProposal: plan.isProposal,
+      }));
 
-    return result 
-
+      return result;
     } catch (error) {
       console.log(error);
       throw new BadRequestException(error);
@@ -77,26 +77,23 @@ export class PlanService {
     }
   }
 
-  async findByTeam(idTeam: number): Promise<{ date: string; CollabId: number; isProposal: boolean; }[]> {
+  async findByTeam(
+    idTeam: number,
+  ): Promise<{ date: string; CollabId: number; isProposal: boolean }[]> {
     try {
-      
-      
       const plans = await this.planRepository.find({
         where: { team: { id: idTeam } },
         relations: ['team', 'collab'],
       });
-         // After fetching, map to extract only the necessary fields
-    const result = plans.map(plan => ({
-      date: plan.date,
-      CollabId: plan.collab.id, // Extract the 'collab' id
-      isProposal:plan.isProposal
-      
-    }));
+      // After fetching, map to extract only the necessary fields
+      const result = plans.map((plan) => ({
+        date: plan.date,
+        CollabId: plan.collab.id, // Extract the 'collab' id
+        isProposal: plan.isProposal,
+      }));
 
-    return result 
-
+      return result;
     } catch (error) {
-      
       console.log(error);
       throw new BadRequestException(error);
     }
@@ -133,18 +130,16 @@ export class PlanService {
   async getPlans(idTeams: number[], isProposal: boolean): Promise<any> {
     // Step 1: Fetch all the child teams (subteams) related to the specified team IDs
     const allTeamIds = await this.getAllTeamIdsWithChildren(idTeams);
-    
-   
-    
+
+    console.log(idTeams, ' ', isProposal);
+
     // Step 2: Fetch all users belonging to the specified teams and their subteams
     const users = await this.userRepository.find({
       where: { team: { id: In(allTeamIds) } }, // Fetch users belonging to any of the specified team IDs
       select: ['id'], // Fetch only user IDs
     });
 
-    
-    
-    const userIds = users.map(user => user.id); // Extract user IDs
+    const userIds = users.map((user) => user.id); // Extract user IDs
 
     // Step 3: Fetch plans associated with those user IDs
     const plans = await this.planRepository.find({
@@ -152,36 +147,35 @@ export class PlanService {
         collab: { id: In(userIds) },
         isProposal: isProposal,
       },
-      select: ['date','isProposal'], // Select only the 'date' field from the Plan entity
+      select: ['date', 'isProposal'], // Select only the 'date' field from the Plan entity
       relations: ['collab'], // Fetch the 'collab' relationship
     });
-    
-    
 
     // After fetching, map to extract only the necessary fields
-    const result = plans.map(plan => ({
+    const result = plans.map((plan) => ({
       date: plan.date,
       CollabId: plan.collab.id, // Extract the 'collab' id
-      isProposal:plan.isProposal
+      isProposal: plan.isProposal,
     }));
-    
+
     return result;
-    
 
     console.log('Fetched Plans:', plans);
-    
-    return plans;
-}
 
-// Helper function to recursively fetch child team IDs
-private async getAllTeamIdsWithChildren(idTeams: number[]): Promise<number[]> {
+    return plans;
+  }
+
+  // Helper function to recursively fetch child team IDs
+  private async getAllTeamIdsWithChildren(
+    idTeams: number[],
+  ): Promise<number[]> {
     // Step 1: Fetch all the teams and their children
     const teamsWithChildren = await this.teamRepository.find({
       where: { parentTeam: { id: In(idTeams) } }, // Assuming parentTeam is the relation to the parent team
       select: ['id'], // Only need team IDs
     });
 
-    const childTeamIds = teamsWithChildren.map(team => team.id); // Extract child team IDs
+    const childTeamIds = teamsWithChildren.map((team) => team.id); // Extract child team IDs
 
     // Step 2: If there are no more child teams, return the original IDs
     if (childTeamIds.length === 0) {
@@ -189,98 +183,103 @@ private async getAllTeamIdsWithChildren(idTeams: number[]): Promise<number[]> {
     }
 
     // Step 3: Recursively fetch subteams of the current child teams
-    const nestedChildTeamIds = await this.getAllTeamIdsWithChildren(childTeamIds);
+    const nestedChildTeamIds =
+      await this.getAllTeamIdsWithChildren(childTeamIds);
 
     // Step 4: Return all IDs (original team IDs + child team IDs)
     return [...idTeams, ...nestedChildTeamIds];
-}
+  }
 
-formatDateToYYYYMMDD(date: Date): string {
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if needed
-  const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if needed
-  return `${year}-${month}-${day}`;
-}
+  formatDateToYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if needed
+    const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if needed
+    return `${year}-${month}-${day}`;
+  }
 
+  async processPlanChanges(
+    planChanges: { CollabId: number; date: string; action: string }[],
+    isProposal: boolean,
+  ): Promise<void> {
+    for (const change of planChanges) {
+      const { CollabId, date, action } = change;
+      let idTeam: number;
 
-async processPlanChanges(
-  planChanges: { CollabId: number; date: string; action: string }[],
-  isProposal: boolean,
-): Promise<void> {
-  for (const change of planChanges) {
-    const { CollabId, date, action } = change;
-    let idTeam: number;
+      console.log(planChanges);
 
-    console.log(planChanges);
-    
-    // Fetch the user and their associated team
-    const user = await this.userRepository.findOne({
-      where: { id: CollabId },
-      relations: ['team'],
-    });
-
-    if (!user || !user.team) {
-      throw new NotFoundException('User or Team not found');
-    }
-
-    idTeam = user.team.id;
-
-    // Convert the date string to a Date object and format it as YYYY-MM-DD
-    
-    const dateFromatted = date
-
-
-    if (action === 'delete') {
-  
-      
-      // Handle deletion of plan
-      await this.planRepository.delete({
-        collab: { id: CollabId },
-        team: { id: idTeam },
-        date: dateFromatted, // Use the formatted date
-        isProposal: isProposal,
-      });
-    } else if (action === 'add') {
-      // Ensure atomicity: Add a new plan only if it doesn't exist already
-      const existingPlan = await this.planRepository.findOne({
-        where: {
-          collab: { id: CollabId },
-          team: { id: idTeam },
-          date: dateFromatted, // Use the formatted date
-          isProposal: isProposal,
-        },
+      // Fetch the user and their associated team
+      const user = await this.userRepository.findOne({
+        where: { id: CollabId },
+        relations: ['team'],
       });
 
+      if (!user || !user.team) {
+        throw new NotFoundException('User or Team not found');
+      }
 
+      idTeam = user.team.id;
 
-      // Only add a new plan if it doesn't already exist
-      if (!existingPlan) {
-    
+      // Convert the date string to a Date object and format it as YYYY-MM-DD
+      const dateFormatted = date; // Ensure this is in 'YYYY-MM-DD' format
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0); // Set time to midnight (00:00:00.000)
 
-        // Create a new plan using the formatted date
-        const newPlan = this.planRepository.create({
+      const targetDate = new Date(dateFormatted);
+      targetDate.setHours(0, 0, 0, 0); // Set time to midnight (00:00:00.000)
+
+      console.log(targetDate, currentDate, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+
+      // Check if the target date is valid and >= today
+      if (isNaN(targetDate.getTime()) || targetDate < currentDate) {
+        throw new BadRequestException(
+          `Date must be today or in the future: ${dateFormatted}`,
+        );
+      }
+
+      if (action === 'delete') {
+        // Handle deletion of plan
+        await this.planRepository.delete({
           collab: { id: CollabId },
-          date: dateFromatted, // Use the formatted date as string
           team: { id: idTeam },
+          date: dateFormatted, // Use the formatted date
           isProposal: isProposal,
         });
+      } else if (action === 'add') {
+        // Ensure atomicity: Add a new plan only if it doesn't exist already
+        const existingPlan = await this.planRepository.findOne({
+          where: {
+            collab: { id: CollabId },
+            team: { id: idTeam },
+            date: dateFormatted, // Use the formatted date
+            isProposal: isProposal,
+          },
+        });
 
-        try {
-          // Save the new plan
-          await this.planRepository.save(newPlan);
-        } catch (error) {
-          // Handle duplicate key error
-          if (error.code === 'ER_DUP_ENTRY') { // MySQL duplicate key error code
-            throw new ConflictException('Plan already exists');
+        // Only add a new plan if it doesn't already exist
+        if (!existingPlan) {
+          // Create a new plan using the formatted date
+          const newPlan = this.planRepository.create({
+            collab: { id: CollabId },
+            date: dateFormatted, // Use the formatted date as string
+            team: { id: idTeam },
+            isProposal: isProposal,
+          });
+
+          try {
+            // Save the new plan
+            await this.planRepository.save(newPlan);
+          } catch (error) {
+            // Handle duplicate key error
+            if (error.code === 'ER_DUP_ENTRY') {
+              // MySQL duplicate key error code
+              throw new ConflictException('Plan already exists');
+            }
+            throw error; // Re-throw other errors
           }
-          throw error; // Re-throw other errors
         }
+      } else {
+        throw new BadRequestException(`Invalid action: ${action}`);
       }
-    } else {
-      throw new BadRequestException(`Invalid action: ${action}`);
     }
   }
-}
-
-
 }

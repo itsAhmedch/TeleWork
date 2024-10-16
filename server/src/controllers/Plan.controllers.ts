@@ -87,11 +87,15 @@ export class PlanController {
     return this.planService.getPlans(idsTeams,isProposal);
   }
 
-  @Get()
-  @hasRoles('admin')
-  findAll(): Promise<Plan[]> {
-    return this.planService.findAll();
-  }
+  @Post()
+@hasRoles('admin')
+findAll(@Body() body: { isProposal: boolean }): Promise<Plan[]> {
+  const isProposal = body.isProposal;
+  console.log(isProposal, 'Received isProposal value');
+
+  return this.planService.findAll(isProposal);
+}
+
 
   @Get(':id')
   @hasRoles('respo','admin','leader')
@@ -107,7 +111,7 @@ export class PlanController {
 
 
 
-  @Get('/LeaderTeam')
+  @Get('LeaderTeam/')
   @hasRoles('leader')
   async findByTeam(@Req() req: Request): Promise<any[]> {
     console.log("Log from findByTeam"); // This should log

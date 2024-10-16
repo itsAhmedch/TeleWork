@@ -46,6 +46,7 @@ export class EmployeesListComponent implements OnInit {
   @Output() employeesEvent = new EventEmitter<Employee[]>();
   @Output() respoEvent = new EventEmitter<number>();
   @Output() workingsDaysEvent = new EventEmitter<any[]>();
+  @Output() getproposalDayEvent = new EventEmitter<any[]>();
 
   teams: Team[] = [];
   subTeams: Team[] = [];
@@ -87,6 +88,7 @@ export class EmployeesListComponent implements OnInit {
     }
 
     if (this.role === 'leader') {
+      this.selectedRespo = tokenData.id;
       this.getLeaderTeamPlan()
       this.getMyTeam()
     }
@@ -134,6 +136,7 @@ export class EmployeesListComponent implements OnInit {
         (data) => {
           this.employees = data;
           this.getPlans(getAll);
+          this.getProposalPlans(getAll);
           this.employeesEvent.emit(this.employees);
         },
         (error) => {
@@ -200,6 +203,8 @@ private fetchEmployeesByTeam(teamId: number): void {
       (data) => {
         this.employees = data;
         this.getPlans(false);
+        this.getProposalPlans(false);
+     
         this.employeesEvent.emit(this.employees);
       },
       (error) => {
@@ -216,6 +221,8 @@ private fetchEmployeesBySubTeam(subTeamId: number): void {
       (data) => {
         this.employees = data;
         this.getPlans(false);
+        this.getProposalPlans(false);
+        
         this.employeesEvent.emit(this.employees);
       },
       (error) => {
@@ -256,10 +263,20 @@ private fetchEmployeesBySubTeam(subTeamId: number): void {
       }
     );
   }
+  private getProposalPlans(getAll: boolean): void {
+    const teamsIds =
+      this.selectedTeamId === -1 ? this.teams.map((t) => t.id) : [this.selectedTeamId];
+    this.planService.getPlans(this.selectedRespo, teamsIds, true, getAll).subscribe(
+      (response) => {
+        this.getproposalDayEvent.emit(response);
+        this.cdRef.detectChanges();
+      }
+    );
+  }
 
   getLeaderTeamPlan(){
     this.planService.getLeaderTeamPlan().subscribe(
-      (response) => {
+      (response:any) => {
         this.workingsDaysEvent.emit(response);
         this.cdRef.detectChanges();
       })

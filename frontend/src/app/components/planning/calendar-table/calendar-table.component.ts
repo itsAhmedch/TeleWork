@@ -7,11 +7,13 @@ import {
   Output,
   EventEmitter,
   ChangeDetectorRef,
+  OnInit,
 } from '@angular/core';
 import moment from 'moment';
 import { CalendarService } from './calendar.service';
 import { EmployeesListComponent } from '../employees-list/employees-list.component';
 import { planService } from '../../../services/plan.service';
+import { AuthService } from '../../../services/auth.service';
 
 // Interface for the calendar day structure
 interface CalendarDay {
@@ -23,7 +25,7 @@ interface CalendarDay {
 interface Employee {
   id: number;
   fullname: string;
-  cin:number
+  cin: number;
 }
 
 // Interface for Form Working Dates
@@ -41,37 +43,34 @@ interface WorkingDate {
   styleUrls: ['./calendar-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush, // Improves performance by checking only changed values
 })
-export class CalendarTableComponent {
-  currentDate = moment(); // Current date for the calendar
-  daysInMonth: CalendarDay[] = []; // Array of days in the current month
-  daysInWeek: CalendarDay[] = []; // Array of days in the current week
-  monthYearLabel = ''; // Label for the current month
-  weekLabel = ''; // Label for the current week
-  currentWeekIndex = 0; // Index to track the current week
+export class CalendarTableComponent implements OnInit {
   employees: Employee[] = [];
   workingDates: WorkingDate[] = [];
+  proposalDates: WorkingDate[] = [];
   planChanges: { CollabId: number; date: string; action: string }[] = []; // Track plan changes
   respoId: number = -1;
   teamIds: number[] = [];
+  showProposal: boolean = false;
+  role: string = '';
   constructor(
     private calendarService: CalendarService,
     private planService: planService,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private authService: AuthService
   ) {
     this.generateMonth(); // Generate the initial month
     this.generateWeek(); // Generate the initial week
   }
 
-  // Create a getter to expose moment to the template
-  get moment() {
-    return moment;
+  ngOnInit(): void {
+    const tokenData = this.authService.getTokenData();
+    this.role = tokenData.role;
+    console.log(['respo', 'leader'].includes(this.role));
+    if (['respo', 'leader'].includes(this.role)) {
+      this.respoId = tokenData.id;
+    }
   }
 
-  // Use @HostListener to detect window resize and adjust mobile mode
-  @HostListener('window:resize')
-  onResize() {
-    this.generateMonth(); // Regenerate month when screen size changes
-  }
   @Output() PlanChangesEvent = new EventEmitter<
     { CollabId: number; date: string; action: string }[]
   >();
@@ -82,6 +81,230 @@ export class CalendarTableComponent {
   handleEmployees(employees: any) {
     this.employees = employees;
   }
+
+  savePlans() {
+    this.planService.savePlan(this.respoId, this.planChanges).subscribe(() => {
+      this.planChanges = [];
+
+      this.cdRef.detectChanges();
+    });
+  }
+
+  showProposalFunc() {
+    this.showProposal = !this.showProposal;
+  }
+  emptySavePlans() {
+    if (this.planChanges.length > 0) {
+      this.planChanges.forEach((planChange) => {
+        if (planChange.action === 'add') {
+          // Remove workingDate for 'add' action
+          this.workingDates = this.workingDates.filter(
+            (workingDate) =>
+              !(
+                workingDate.CollabId === planChange.CollabId &&
+                workingDate.date === planChange.date
+              )
+          );
+        } else if (planChange.action === 'delete') {
+          // Add back to workingDates for 'delete' action
+          this.workingDates.push(planChange);
+        }
+      });
+
+      // Clear planChanges after processing
+      this.planChanges = [];
+    }
+  }
+
+  getRespoId(id: number) {
+    console.log(id);
+
+    this.respoId = id;
+    console.log('Received Respo ID:', this.respoId); // Debug log
+  }
+  getWorkingDays(workingDays: any) {
+    console.log(workingDays, 'fffffffffffffff');
+
+    this.workingDates = [...workingDays];
+
+    this.cdRef.detectChanges();
+  }
+
+  getproposalDay(proposalDays: any) {
+    this.proposalDates = [...proposalDays];
+    console.log(this.proposalDates, 'proposalDays vvvvvvvvvvvvvvvvvvvvv');
+
+    this.cdRef.detectChanges();
+  }
+
+  // Check if the day is chosen for the given employee and date
+  isChoosingDay(employeeId: number, date: moment.Moment): boolean {
+    const formattedDate = this.formatDateToYYYYMMDD(date.toDate());
+
+    const hasExistingWorkDay = this.workingDates.some(
+      (workingDate) =>
+        workingDate.CollabId === employeeId &&
+        workingDate.date === formattedDate
+    );
+
+    if (this.role !== 'leader') {
+      const hasAction = this.planChanges.some(
+        (workingDate) =>
+          workingDate.CollabId === employeeId &&
+          moment(workingDate.date).isSame(date, 'day')
+      );
+
+      return hasAction
+        ? !this.planChanges.find(
+            (change) =>
+              change.CollabId === employeeId &&
+              moment(change.date).isSame(date, 'day') &&
+              change.action === 'delete'
+          )
+        : hasExistingWorkDay;
+    } else {
+      return hasExistingWorkDay;
+    }
+  }
+
+  isProposelDay(employeeId: number, date: moment.Moment): boolean {
+    if (this.showProposal) {
+      const formattedDate = this.formatDateToYYYYMMDD(date.toDate());
+
+      const hasExistingProposal = this.proposalDates.some(
+        (proposalDate) =>
+          proposalDate.CollabId === employeeId &&
+          proposalDate.date === formattedDate
+      );
+
+      if (this.role === 'leader') {
+        const hasAction = this.planChanges.some(
+          (workingDate) =>
+            workingDate.CollabId === employeeId &&
+            moment(workingDate.date).isSame(date, 'day')
+        );
+
+        return hasAction
+          ? !this.planChanges.find(
+              (change) =>
+                change.CollabId === employeeId &&
+                moment(change.date).isSame(date, 'day') &&
+                change.action === 'delete'
+            )
+          : hasExistingProposal;
+      } else {
+        return hasExistingProposal;
+      }
+    }
+
+    return false;
+  }
+
+  // Toggle shift for the employee on a specific date
+  toggleShift(employeeId: number, date: moment.Moment): void {
+    const dateStr = this.formatDateToYYYYMMDD(date.toDate());
+
+    const isLeader = this.role === 'leader';
+    // Check if the selected date is today or in the future
+    const isFutureDate = !date.isBefore(moment().startOf('day'));
+
+    // If the date is in the past, do not toggle
+    if (!isFutureDate) {
+      console.log('Cannot toggle shifts for past dates.');
+      return; // Exit the function if the date is in the past
+    }
+
+    // Find if there's already an action for this employee and date in planChanges
+    const existingIndexChanges = this.planChanges.findIndex(
+      (change) => change.CollabId === employeeId && change.date === dateStr
+    );
+
+    // Find if this date is already in workingDates
+    const existingWorkingIndex = (
+      isLeader ? this.proposalDates : this.workingDates
+    ).findIndex(
+      (change) => change.CollabId === employeeId && change.date === dateStr
+    );
+
+    // If the shift exists in workingDates (already assigned)
+    if (existingWorkingIndex !== -1) {
+      // Remove the shift from workingDates
+      (isLeader ? this.proposalDates : this.workingDates).splice(
+        existingWorkingIndex,
+        1
+      );
+
+      // Remove existing 'add' action if present, or add 'delete' action
+      if (
+        existingIndexChanges !== -1 &&
+        this.planChanges[existingIndexChanges].action === 'add'
+      ) {
+        // Remove 'add' action from planChanges to avoid duplication
+        this.planChanges.splice(existingIndexChanges, 1);
+      } else if (existingIndexChanges === -1) {
+        // If no entry exists in planChanges, add 'delete' action
+        this.planChanges.push({
+          CollabId: employeeId,
+          date: dateStr,
+          action: 'delete',
+        });
+      } else if (this.planChanges[existingIndexChanges].action !== 'add') {
+        // Update existing entry's action to 'delete' if it's not 'add'
+        this.planChanges[existingIndexChanges].action = 'delete';
+      }
+    } else {
+      // If the shift is not in workingDates, add it
+      (isLeader ? this.proposalDates : this.workingDates).push({
+        CollabId: employeeId,
+        date: dateStr,
+      });
+
+      // If 'delete' action already exists, remove it, else add 'add' action
+      if (
+        existingIndexChanges !== -1 &&
+        this.planChanges[existingIndexChanges].action === 'delete'
+      ) {
+        // Remove 'delete' action from planChanges to revert the deletion
+        this.planChanges.splice(existingIndexChanges, 1);
+      } else if (existingIndexChanges === -1) {
+        // Add 'add' action to planChanges if no action exists
+        this.planChanges.push({
+          CollabId: employeeId,
+          date: dateStr,
+          action: 'add',
+        });
+      }
+    }
+
+    console.log(this.planChanges);
+  }
+
+  // ------------------------- the date navigations part ------------------------
+  currentDate = moment(); // Current date for the calendar
+  daysInMonth: CalendarDay[] = []; // Array of days in the current month
+  daysInWeek: CalendarDay[] = []; // Array of days in the current week
+  monthYearLabel = ''; // Label for the current month
+  weekLabel = ''; // Label for the current week
+  currentWeekIndex = 0; // Index to track the current week
+  // Create a getter to expose moment to the template
+  get moment() {
+    return moment;
+  }
+  // Use @HostListener to detect window resize and adjust mobile mode
+  @HostListener('window:resize')
+  onResize() {
+    this.generateMonth(); // Regenerate month when screen size changes
+  }
+  formatDateToYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if needed
+    const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if needed
+    return `${year}-${month}-${day}`;
+  }
+  isToday(date: moment.Moment): boolean {
+    return date.isSame(moment(), 'day');
+  }
+
   // Generate the month
   private generateMonth(): void {
     this.daysInMonth = this.calendarService.getDaysInMonth(this.currentDate);
@@ -146,129 +369,11 @@ export class CalendarTableComponent {
       .format('MMM DD')}`;
   }
 
-  formatDateToYYYYMMDD(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if needed
-    const day = date.getDate().toString().padStart(2, '0'); // Add leading zero if needed
-    return `${year}-${month}-${day}`;
-  }
-
-  // Check if the day is chosen for the given employee and date
-  isChoosingDay(employeeId: number, date: moment.Moment): boolean {
-    const formattedDate = this.formatDateToYYYYMMDD(date.toDate());
-
-    const hasExistingWorkDay = this.workingDates.some(
-      (workingDate) =>
-        workingDate.CollabId === employeeId &&
-        workingDate.date === formattedDate
-    );
-
-    const hasAction = this.planChanges.some(
-      (workingDate) =>
-        workingDate.CollabId === employeeId &&
-        moment(workingDate.date).isSame(date, 'day')
-    );
-
-    return hasAction
-      ? !this.planChanges.find(
-          (change) =>
-            change.CollabId === employeeId &&
-            moment(change.date).isSame(date, 'day') &&
-            change.action === 'delete'
-        )
-      : hasExistingWorkDay;
-  }
-
-  // Toggle shift for the employee on a specific date
-  toggleShift(employeeId: number, date: moment.Moment): void {
-    const dateStr = this.formatDateToYYYYMMDD(date.toDate());
-
-    // Find if there's already an action for this employee and date in planChanges
-    const existingIndexChanges = this.planChanges.findIndex(
-      (change) => change.CollabId === employeeId && change.date === dateStr
-    );
-
-    // Find if this date is already in workingDates
-    const existingWorkingIndex = this.workingDates.findIndex(
-      (change) => change.CollabId === employeeId && change.date === dateStr
-    );
-
-    // If the shift exists in workingDates (already assigned)
-    if (existingWorkingIndex !== -1) {
-      // Remove the shift from workingDates
-      this.workingDates.splice(existingWorkingIndex, 1);
-
-      // Remove existing 'add' action if present, or add 'delete' action
-      if (
-        existingIndexChanges !== -1 &&
-        this.planChanges[existingIndexChanges].action === 'add'
-      ) {
-        // Remove 'add' action from planChanges to avoid duplication
-        this.planChanges.splice(existingIndexChanges, 1);
-      } else if (existingIndexChanges === -1) {
-        // If no entry exists in planChanges, add 'delete' action
-        this.planChanges.push({
-          CollabId: employeeId,
-          date: dateStr,
-          action: 'delete',
-        });
-      } else if (this.planChanges[existingIndexChanges].action !== 'add') {
-        // Update existing entry's action to 'delete' if it's not 'add'
-        this.planChanges[existingIndexChanges].action = 'delete';
-      }
-    } else {
-      // If the shift is not in workingDates, add it
-      this.workingDates.push({
-        CollabId: employeeId,
-        date: dateStr,
-      });
-
-      // If 'delete' action already exists, remove it, else add 'add' action
-      if (
-        existingIndexChanges !== -1 &&
-        this.planChanges[existingIndexChanges].action === 'delete'
-      ) {
-        // Remove 'delete' action from planChanges to revert the deletion
-        this.planChanges.splice(existingIndexChanges, 1);
-      } else if (existingIndexChanges === -1) {
-        // Add 'add' action to planChanges if no action exists
-        this.planChanges.push({
-          CollabId: employeeId,
-          date: dateStr,
-          action: 'add',
-        });
-      }
-    }
-
-    console.log(this.planChanges);
-  }
-
   // Reset to the current date
   resetToCurrentDate(): void {
     this.currentDate = moment(); // Reset current date to today's date
     this.currentWeekIndex = 0; // Reset the current week index
     this.generateMonth(); // Regenerate the month view
     this.generateWeek(); // Regenerate the week view
-  }
-
-  savePlans() {
-    this.planService.savePlan(this.respoId, this.planChanges).subscribe(() => {
-      this.planChanges = [];
-      console.log(this.workingDates, 'ddddddddddddddddddddddd');
-      this.cdRef.detectChanges();
-    });
-  }
-
-  showProposal() {}
-
-  getRespoId(id: number) {
-    this.respoId = id;
-    console.log('Received Respo ID:', this.respoId); // Debug log
-  }
-  getWorkingDays(workingDays: any) {
-    console.log(workingDays, 'fffffffffffffff');
-
-    this.workingDates = [this.workingDates, ...workingDays];
-    this.cdRef.detectChanges();
   }
 }

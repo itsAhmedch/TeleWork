@@ -2,7 +2,7 @@
 
 .normal-day {
     background-color: #ffffff; // Default color for normal days
-
+    
 }
 
 // Ensure the table takes full width
@@ -64,5 +64,38 @@ td:first-child {
 
   h6 {
     margin: 0; /* Ensure there's no default margin */
+  }
+  
+  .btn-primary {
+    background-color: #007bff; /* Change to your desired color */
+    color: white; /* Change text color if needed */
+  }
+
+  .btn-success{
+    background-color: #2bd810; /* Change to your desired color */
+    color: white; /* Change text color if needed */
+  }
+  
+
+
+  .today-header {
+    background-color: #007bff; /* Change to your desired color */
+    color: white; /* Change text color if needed */
+  }
+  
+  .day {
+    position: relative; /* Make sure it's positioned */
+  }
+  
+  .proposal-dot {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: red; /* Change the color as needed */
+    border-radius: 50%; /* This makes it a circle */
+    position: absolute;
+    bottom: 45%; /* Position it at the bottom of the cell */
+    left: 50%;
+    transform: translateX(-50%);
   }
   
