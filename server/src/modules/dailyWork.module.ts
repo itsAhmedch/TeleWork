@@ -7,10 +7,14 @@ import { User } from 'src/entities/user.entity';
 import { UserService } from 'src/services/user.service';
 import { Team } from 'src/entities/team.entity';
 import { JwtService } from '@nestjs/jwt';
+import { authService } from 'src/services/auth.service';
+import { PlanService } from 'src/services/Plan.service';
+import { Plan } from 'src/entities/plan.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DailyWork,User,Team])],
-  providers: [DailyWorkService,UserService,JwtService],
+  imports: [TypeOrmModule.forFeature([DailyWork,User,Team,Plan])],
+  providers: [DailyWorkService,UserService,JwtService,authService,PlanService],
   controllers: [DailyWorkController],
+  
 })
 export class DailyWorkModule {}

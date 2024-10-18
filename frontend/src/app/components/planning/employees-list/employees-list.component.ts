@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
+import { Subject } from 'rxjs';
+import { switchMap, takeUntil } from 'rxjs/operators';
 import { UserService } from '../../../services/user.service';
 import { TeamsService } from '../../../services/team.service';
 import { planService } from '../../../services/plan.service';
@@ -31,11 +33,15 @@ interface Team {
   templateUrl: './employees-list.component.html',
   styleUrls: ['./employees-list.component.scss'],
 })
-export class EmployeesListComponent implements OnInit {
+export class EmployeesListComponent implements OnInit, OnDestroy {
   employees: Employee[] = [];
   responsibles: Responsible[] = [];
+  teams: Team[] = [];
+  subTeams: Team[] = [];
+  
   selectedRespo = -1;
   selectedTeamId = -1;
+  role: string = '';
 
   employeesForm = new FormGroup({
     responsible: new FormControl(null),
@@ -48,9 +54,7 @@ export class EmployeesListComponent implements OnInit {
   @Output() workingsDaysEvent = new EventEmitter<any[]>();
   @Output() getproposalDayEvent = new EventEmitter<any[]>();
 
-  teams: Team[] = [];
-  subTeams: Team[] = [];
-  role: string = '';
+  private destroy$ = new Subject<void>();
 
   constructor(
     private userService: UserService,
@@ -65,6 +69,11 @@ export class EmployeesListComponent implements OnInit {
     this.loadInitialData();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private initializeForm(): void {
     this.employeesForm.get('team')?.disable();
     this.employeesForm.get('subTeam')?.disable();
@@ -77,30 +86,32 @@ export class EmployeesListComponent implements OnInit {
     if (this.role === 'admin') {
       await this.loadResponsibles();
       this.fetchEmployees(true);
-    }
-
-    if (this.role === 'respo') {
-      this.selectedRespo = tokenData.id;
-      this.respoEvent.emit(this.selectedRespo);
-      await this.loadTeamsByRespo(this.selectedRespo);
-      this.fetchEmployees(false);
-      this.employeesForm.get('team')?.enable();
-    }
-
-    if (this.role === 'leader') {
-      this.selectedRespo = tokenData.id;
-      this.getLeaderTeamPlan()
-      this.getMyTeam()
+    } else if (this.role === 'respo') {
+      this.handleRespoRole(tokenData.id);
+    } else if (this.role === 'leader') {
+      this.handleLeaderRole();
     }
   }
 
   private async loadResponsibles(): Promise<void> {
     try {
-      const result = await this.userService.getRespoList().toPromise();
-      this.responsibles = Array.isArray(result) ? result : [];
+      this.responsibles = await this.userService.getRespoList().toPromise();
     } catch (error) {
-      console.error('Error loading responsibles:', error);
+      this.handleError('loading responsibles', error);
     }
+  }
+
+  private handleRespoRole(id: number): void {
+    this.selectedRespo = id;
+    this.respoEvent.emit(this.selectedRespo);
+    this.loadTeamsByRespo(this.selectedRespo);
+    this.fetchEmployees(false);
+    this.employeesForm.get('team')?.enable();
+  }
+
+  private handleLeaderRole(): void {
+    this.getLeaderTeamPlan();
+    this.getMyTeam();
   }
 
   onRespoChange(): void {
@@ -130,8 +141,8 @@ export class EmployeesListComponent implements OnInit {
   }
 
   private fetchEmployees(getAll: boolean): void {
-    this.userService
-      .getCollabsNames(this.selectedRespo, this.selectedTeamId, getAll)
+    this.userService.getCollabsNames(this.selectedRespo, this.selectedTeamId, getAll)
+      .pipe(takeUntil(this.destroy$))
       .subscribe(
         (data) => {
           this.employees = data;
@@ -139,164 +150,125 @@ export class EmployeesListComponent implements OnInit {
           this.getProposalPlans(getAll);
           this.employeesEvent.emit(this.employees);
         },
-        (error) => {
-          console.error('Error fetching employees:', error);
-        }
+        (error) => this.handleError('fetching employees', error)
       );
   }
- 
+
   private loadTeamsByRespo(idRespo: number): void {
     if (idRespo !== -1) {
-      this.teamsService.getTeamsByRespo(idRespo).subscribe(
-        (data) => {
-          this.teams = data ?? [];
-          this.subTeams = [];
-          this.cdRef.detectChanges();
-        },
-        (error) => {
-          console.error('Error loading teams', error);
-          this.teams = [];
-          this.subTeams = [];
-        }
-      );
+      this.teamsService.getTeamsByRespo(idRespo)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(
+          (data) => {
+            this.teams = data ?? [];
+            this.subTeams = [];
+            this.cdRef.detectChanges();
+          },
+          (error) => this.handleError('loading teams', error)
+        );
     }
   }
 
   onTeamChange(isSubteam: boolean): void {
     const team = this.employeesForm.get('team')?.value ?? '';
     const subTeam = this.employeesForm.get('subTeam')?.value ?? '';
-  
+
     if (!isSubteam && team !== '') {
       this.selectedTeamId = Number(team);
-      this.employeesForm.get('subTeam')?.setValue(null);
-      this.employeesForm.get('subTeam')?.disable();
       this.loadSubTeamsByRespo(this.selectedRespo, this.selectedTeamId);
-      this.fetchEmployees(false);
-    } else if (team === '') {
+    } else if (subTeam !== '') {
+      this.fetchEmployeesBySubTeam(Number(subTeam));
+    } else if (team !== '') {
+      this.fetchEmployeesByTeam(this.selectedTeamId);
+    } else {
       this.selectedTeamId = -1;
       this.fetchEmployees(false);
-      this.employeesForm.get('subTeam')?.disable();
-    } else {
-      // Handle the case when a subteam is selected
-      if (isSubteam) {
-        if (subTeam !== '') {
-          // If a subteam is selected, get its ID
-          const selectedSubTeamId = Number(subTeam);
-          // Fetch employees based on the selected subteam
-          this.fetchEmployeesBySubTeam(selectedSubTeamId);
-        } else {
-          // If subteam is empty, fetch employees for the selected team
-          this.fetchEmployeesByTeam(this.selectedTeamId);
-        }
-      } else {
-        // Reset selected team ID if needed
-        this.selectedTeamId = -1; // This may not be necessary in this case
-      }
     }
+    
   }
-  
-// Create a new method to fetch employees by team
-private fetchEmployeesByTeam(teamId: number): void {
-  this.userService
-    .getCollabsNames(this.selectedRespo, teamId, false) // Fetch employees for the team
-    .subscribe(
-      (data) => {
-        this.employees = data;
-        this.getPlans(false);
-        this.getProposalPlans(false);
-     
-        this.employeesEvent.emit(this.employees);
-      },
-      (error) => {
-        console.error('Error fetching employees for team:', error);
-      }
-    );
-}
 
-// Create a new method to fetch employees by subteam
-private fetchEmployeesBySubTeam(subTeamId: number): void {
-  this.userService
-    .getCollabsNames(this.selectedRespo, subTeamId, false) // Fetch employees for the subteam
-    .subscribe(
-      (data) => {
-        this.employees = data;
-        this.getPlans(false);
-        this.getProposalPlans(false);
-        
-        this.employeesEvent.emit(this.employees);
-      },
-      (error) => {
-        console.error('Error fetching employees for subteam:', error);
-      }
-    );
-}
+  private fetchEmployeesByTeam(teamId: number): void {
+    this.userService.getCollabsNames(this.selectedRespo, teamId, false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (data) => {
+          this.employees = data;
+          this.emitEvents(false);
+        },
+        (error) => this.handleError('fetching employees for team', error)
+      );
+  }
+
+  private fetchEmployeesBySubTeam(subTeamId: number): void {
+    this.userService.getCollabsNames(this.selectedRespo, subTeamId, false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (data) => {
+          this.employees = data;
+          this.emitEvents(false);
+        },
+        (error) => this.handleError('fetching employees for subteam', error)
+      );
+  }
 
   private loadSubTeamsByRespo(idRespo: number, idTeam: number): void {
     if (idRespo !== -1 && idTeam !== -1) {
-      this.teamsService.getSubTeamsByRespo(idRespo, idTeam).subscribe(
-        (data) => {
-          this.subTeams = data;
-          if (this.subTeams.length > 0) {
+      this.teamsService.getSubTeamsByRespo(idRespo, idTeam)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(
+          (data) => {
+            this.subTeams = data;
             this.employeesForm.get('subTeam')?.enable();
-          } else {
-            this.employeesForm.get('subTeam')?.disable();
-          }
-          this.fetchEmployees(false);
-          this.cdRef.detectChanges();
-        },
-        (error) => {
-          console.error('Error loading sub-teams', error);
-          this.subTeams = [];
-          this.employeesForm.get('subTeam')?.disable();
-        }
-      );
+            this.fetchEmployees(false);
+          },
+          (error) => this.handleError('loading sub-teams', error)
+        );
     }
   }
 
   private getPlans(getAll: boolean): void {
-    const teamsIds =
-      this.selectedTeamId === -1 ? this.teams.map((t) => t.id) : [this.selectedTeamId];
-    this.planService.getPlans(this.selectedRespo, teamsIds, false, getAll).subscribe(
-      (response) => {
-        this.workingsDaysEvent.emit(response);
-        this.cdRef.detectChanges();
-      }
-    );
+    const teamsIds = this.selectedTeamId === -1 ? this.teams.map((t) => t.id) : [this.selectedTeamId];
+    this.planService.getPlans(this.selectedRespo, teamsIds, false, getAll)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response:any) => this.workingsDaysEvent.emit(response));
   }
+
   private getProposalPlans(getAll: boolean): void {
-    const teamsIds =
-      this.selectedTeamId === -1 ? this.teams.map((t) => t.id) : [this.selectedTeamId];
-    this.planService.getPlans(this.selectedRespo, teamsIds, true, getAll).subscribe(
-      (response) => {
-        this.getproposalDayEvent.emit(response);
-        this.cdRef.detectChanges();
+    const teamsIds = this.selectedTeamId === -1 ? this.teams.map((t) => t.id) : [this.selectedTeamId];
+    this.planService.getPlans(this.selectedRespo, teamsIds, true, getAll)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response:any) => 
+      {
+        console.log(response,'vvvvvvvvvvvvvvvvvvvvvvv');
+        
+        this.getproposalDayEvent.emit(response)
       }
-    );
-  }
-
-  getLeaderTeamPlan(){
-    this.planService.getLeaderTeamPlan().subscribe(
-      (response:any) => {
-        this.workingsDaysEvent.emit(response);
-        this.cdRef.detectChanges();
-      })
-  }
-
-
-  private getMyTeam(): void {
-    this.userService
-      .getMyTeamNames()
-      .subscribe(
-        (data) => {
-          this.employees = data;
-          console.log(this.employees);
-          
-          this.employeesEvent.emit(this.employees);
-        },
-        (error) => {
-          console.error('Error fetching employees:', error);
-        }
       );
   }
 
+  private getLeaderTeamPlan(): void {
+    this.planService.getLeaderTeamPlan()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((response:any) => this.workingsDaysEvent.emit(response));
+  }
+
+  private getMyTeam(): void {
+    this.userService.getMyTeamNames()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data:any) => {
+        this.employees = data;
+        this.employeesEvent.emit(this.employees);
+      });
+  }
+
+  private handleError(context: string, error: any): void {
+    console.error(`Error occurred while ${context}:`, error);
+    // Handle specific error response or notification logic
+  }
+
+  private emitEvents(getAll: boolean): void {
+    this.employeesEvent.emit(this.employees);
+    this.getPlans(getAll);
+    this.getProposalPlans(getAll);
+  }
 }

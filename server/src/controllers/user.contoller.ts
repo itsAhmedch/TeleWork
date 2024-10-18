@@ -25,7 +25,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { RolesGuard } from 'src/guards/roles-guards';
 import { hasRoles } from 'src/guards/decorator/roles.decorator';
 import { Pagination } from 'nestjs-typeorm-paginate';
-@Controller('user/')
+@Controller('user')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(
@@ -142,6 +142,7 @@ async getAllcollabsNames() {
 
   return await this.userService.getAllcollabsNames();
 }
+
 @Get('TeamNames/')
 @hasRoles('leader')
 async TeamNames(@Req() req: Request) {

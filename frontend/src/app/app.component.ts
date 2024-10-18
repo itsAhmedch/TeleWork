@@ -6,7 +6,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { RecaptchaModule } from 'ng-recaptcha';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +15,8 @@ import { FormsModule } from '@angular/forms';
     RouterOutlet,
     HttpClientModule,
     NgxPermissionsModule, // Include this if you're using ngx-permissions
-    CommonModule, FormsModule
+    CommonModule, FormsModule,
+    RecaptchaModule
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

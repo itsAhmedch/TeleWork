@@ -58,4 +58,17 @@ export class planService {
     const url = `${this.apiUrl}/plan/LeaderTeam`;
     return this.http.get(url); 
   }
+
+  getMyWorkingDays():any{
+    
+    const url=`${this.apiUrl}/plan/MyPlans/`
+  
+    
+    return this.http.get<any[]>(url).pipe(
+      catchError((error) => {
+        
+        return throwError(() => new Error('Error fetching your working days'));
+      })
+    );
+  }
 }  

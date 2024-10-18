@@ -13,7 +13,7 @@ import { hasRoles } from 'src/guards/decorator/roles.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 
-@Controller('plan')
+@Controller('plan/')
 export class PlanController {
 
   constructor(private readonly planService: PlanService,
@@ -24,23 +24,7 @@ export class PlanController {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  // @Post()
-  // @hasRoles('respo','admin','leader')
-  // async create(@Body() createPlanDto: CreatePlanDto): Promise<Plan> {
-    // // Check if the team exists
-    // const team = await this.teamRepository.findOne({ where: { id: createPlanDto.idTeam } });
-    // if (!team) {
-    //   throw new NotFoundException(`Team with ID ${createPlanDto.idTeam} not found`);
-    // }
-
-    // // Check if the collaborator (collab) exists
-    // const collab = await this.userRepository.findOne({ where: { id: createPlanDto.idCollab } });
-    // if (!collab) {
-    //   throw new NotFoundException(`Collaborator with ID ${createPlanDto.idCollab} not found`);
-    // }
-
-    // return this.planService.create(createPlanDto,team,collab);
-  // }
+ 
   @Post('SavePlan/:respo')
   @hasRoles('respo','admin','leader')
   async savePlan(
@@ -97,21 +81,16 @@ findAll(@Body() body: { isProposal: boolean }): Promise<Plan[]> {
 }
 
 
-  @Get(':id')
-  @hasRoles('respo','admin','leader')
-  findOne(@Param('id') id: number): Promise<Plan> {
-    return this.planService.findOne(id);
-  }
-
-  @Get('/ByCollab/:id')
-  @hasRoles('respo','admin','leader')
-  findByCollab(@Param('id') id: number): Promise<Plan[]> {
-    return this.planService.findByCollab(id);
+  @Get('/MyPlans/')
+  @hasRoles('leader','collab')
+  async GetMyPlans(@Req() req: Request): Promise<any[]> {
+    const token = await this.authService.decode(req);
+    return this.planService.findByCollab(token.id)
   }
 
 
 
-  @Get('LeaderTeam/')
+  @Get('LeaderTeam')
   @hasRoles('leader')
   async findByTeam(@Req() req: Request): Promise<any[]> {
     console.log("Log from findByTeam"); // This should log
@@ -120,8 +99,7 @@ findAll(@Body() body: { isProposal: boolean }): Promise<Plan[]> {
     return this.planService.findByTeam(IdTeam); // Ensure this is the correct method
   }
   
-
-
+  
   @Delete(':id')
   @hasRoles('respo','admin','leader')
   remove(@Param('id') id: number): Promise<void> {

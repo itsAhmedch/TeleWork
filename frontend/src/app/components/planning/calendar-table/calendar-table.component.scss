@@ -76,26 +76,30 @@ td:first-child {
     color: white; /* Change text color if needed */
   }
   
-
-
   .today-header {
-    background-color: #007bff; /* Change to your desired color */
-    color: white; /* Change text color if needed */
-  }
+    background-color: rgb(15, 114, 252) !important; /* Highlight current day */
+    font-weight: bold;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add bottom shadow */
+}
+
+
+.table th {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Light shadow for all headers */
+}
+
   
   .day {
     position: relative; /* Make sure it's positioned */
   }
   
   .proposal-dot {
-    display: block;
-    width: 10px;
-    height: 10px;
-    background-color: red; /* Change the color as needed */
-    border-radius: 50%; /* This makes it a circle */
-    position: absolute;
-    bottom: 45%; /* Position it at the bottom of the cell */
-    left: 50%;
-    transform: translateX(-50%);
-  }
+    display: inline-block;
+    width: 10px; /* Adjust size */
+    height: 10px; /* Adjust size */
+    background-color: red; /* Change color as needed */
+    border-radius: 50%; /* Makes it round */
+    margin: 0 auto; /* Center align */
+}
+
   

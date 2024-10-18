@@ -62,14 +62,10 @@ export class PlanService {
   async findByCollab(idCollab: number): Promise<Plan[]> {
     try {
       const plans = await this.planRepository.find({
-        where: { collab: { id: idCollab } },
-        relations: ['team', 'collab'],
+        where: { collab: { id: idCollab },isProposal: false },
+        select: ['date'] 
       });
-      if (!plans || plans.length === 0) {
-        throw new NotFoundException(
-          `No plans found for collaborator with ID ${idCollab}`,
-        );
-      }
+      
       return plans;
     } catch (error) {
       console.log(error);
@@ -99,21 +95,24 @@ export class PlanService {
     }
   }
 
-  async findOne(id: number): Promise<Plan> {
-    try {
-      const plan = await this.planRepository.findOne({
-        where: { id },
-        relations: ['team', 'collab'],
-      });
-      if (!plan) {
-        throw new NotFoundException(`Plan with ID ${id} not found`);
-      }
-      return plan;
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestException(error);
-    }
-  }
+  // async findOne(id: number): Promise<Plan> {
+  //   console.log('findone --------------------------------------------- ', id);
+    
+  //   try {
+      
+  //     const plan = await this.planRepository.findOne({
+  //       where: { id },
+  //       relations: ['team', 'collab'],
+  //     });
+  //     if (!plan) {
+  //       throw new NotFoundException(`Plan with ID ${id} not found`);
+  //     }
+  //     return plan;
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new BadRequestException(error);
+  //   }
+  // }
 
   async remove(id: number): Promise<void> {
     try {
@@ -160,9 +159,7 @@ export class PlanService {
 
     return result;
 
-    console.log('Fetched Plans:', plans);
-
-    return plans;
+    
   }
 
   // Helper function to recursively fetch child team IDs
@@ -205,7 +202,7 @@ export class PlanService {
       const { CollabId, date, action } = change;
       let idTeam: number;
 
-      console.log(planChanges);
+      
 
       // Fetch the user and their associated team
       const user = await this.userRepository.findOne({
@@ -227,7 +224,6 @@ export class PlanService {
       const targetDate = new Date(dateFormatted);
       targetDate.setHours(0, 0, 0, 0); // Set time to midnight (00:00:00.000)
 
-      console.log(targetDate, currentDate, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
 
       // Check if the target date is valid and >= today
       if (isNaN(targetDate.getTime()) || targetDate < currentDate) {
@@ -245,6 +241,8 @@ export class PlanService {
           isProposal: isProposal,
         });
       } else if (action === 'add') {
+        console.log('add ----------------------');
+        
         // Ensure atomicity: Add a new plan only if it doesn't exist already
         const existingPlan = await this.planRepository.findOne({
           where: {

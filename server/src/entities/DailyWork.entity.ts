@@ -17,7 +17,7 @@ export class DailyWork {
   date: string;
 
   @Column({ type: 'varchar', length: 5 })
-  times: string;
+  time: string;
 
   @Column({ type: 'bool' })
   workStatus: boolean;
@@ -30,6 +30,6 @@ export class DailyWork {
   setDefaults() {
     const now = new Date();
     this.date = now.toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
-    this.times = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    this.time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   }
 }

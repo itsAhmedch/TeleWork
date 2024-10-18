@@ -24,6 +24,7 @@ export class ModalComponent implements OnInit {
   editMode: boolean = false;
   ErrorMsg = '';
   userData: any = {};
+  responsibles: any = [];
   teams: any = [];
   subTeams: any = [];
   newTeamName: string = '';
@@ -60,21 +61,26 @@ export class ModalComponent implements OnInit {
       ]),
       name: new FormControl('', Validators.required),
       lastName: new FormControl('', Validators.required),
+      idresponsible: new FormControl('', Validators.required),
       idparentTeam: new FormControl('', Validators.required),
-      idTeam: new FormControl(
-        { value: '', disabled: true },
-       
-      ),
+      idTeam: new FormControl({ value: '', disabled: true }),
       role: new FormControl('', Validators.required),
     });
   }
 
-  ngOnInit(): void {
-
+  async ngOnInit() {
     const tokenData = this.AuthService.getTokenData();
-    this.myId = tokenData.id;
     this.role = tokenData.role;
-    this.loadTeamsByRespo(this.myId);
+    console.log(this.role);
+    
+    if (this.role != 'admin') {
+      
+      this.myId = tokenData.id;
+      this.loadTeamsByRespo(this.myId);
+    }
+    else{
+      await this.loadResponsibles();
+    }
 
     if (this.editMode && this.userData) {
       this.title = 'Edit User';
@@ -98,18 +104,19 @@ export class ModalComponent implements OnInit {
     });
   }
 
-
-
   toggleTeamFields(role: string) {
     const teamControl = this.userForm.get('idparentTeam');
     const subTeamControl = this.userForm.get('idTeam');
-    
+    const idresponsible = this.userForm.get('idresponsible');
+
     if (role === 'respo') {
+      idresponsible?.disable(); // Disable the responsible field
       teamControl?.disable(); // Disable the team field
       subTeamControl?.disable(); // Disable the subteam field
       teamControl?.setValidators([]); // Make team field optional
       subTeamControl?.setValidators([]); // Make subteam field optional
     } else {
+      teamControl?.enable(); // Enable the team field
       teamControl?.enable(); // Enable the team field
       subTeamControl?.enable(); // Enable the subteam field
       teamControl?.setValidators([Validators.required]); // Add validation back if needed
@@ -121,11 +128,11 @@ export class ModalComponent implements OnInit {
   async saveUser() {
     if (this.userForm.valid) {
       const formData = this.userForm.value;
-      formData.idTeam=Number(formData.idTeam)
-      formData.idparentTeam=Number(formData.idparentTeam)
+      formData.idTeam = Number(formData.idTeam);
+      formData.idparentTeam = Number(formData.idparentTeam);
 
-      if (!formData.idTeam && this.userForm.get('role')?.value !="respo"){
-        formData.idTeam = formData.idparentTeam
+      if (!formData.idTeam && this.userForm.get('role')?.value != 'respo') {
+        formData.idTeam = formData.idparentTeam;
       }
 
       if (this.editMode) {
@@ -139,22 +146,17 @@ export class ModalComponent implements OnInit {
             modifiedFields[key] = currentValue;
           }
         });
-   
-        this.userService
-          .editUser(modifiedFields, this.userData.id)
-          .subscribe(
-            (user) => {
-             
-              this.modalRef.close('edit');
-            },
-            (error) => {
-              this.ErrorMsg = error;
-              // console.log(error.error,"fgfdgfd");
-            }
-          );
+
+        this.userService.editUser(modifiedFields, this.userData.id).subscribe(
+          (user) => {
+            this.modalRef.close('edit');
+          },
+          (error) => {
+            this.ErrorMsg = error;
+            // console.log(error.error,"fgfdgfd");
+          }
+        );
       } else {
-        
-      
         this.userService.addUser(formData).subscribe(
           (user) => {
             console.log({ user });
@@ -175,10 +177,34 @@ export class ModalComponent implements OnInit {
     this.modalRef.close(null);
   }
 
+  private async loadResponsibles(): Promise<void> {
+    try {
+      this.responsibles = await this.userService.getRespoList().toPromise();
+      console.log(this.responsibles);
+    } catch (error) {
+      throw new Error('loading responsibles failed');
+    }
+  }
+
+  onRespoChange() {
+    const selectedRespo = this.userForm.get('idresponsible')?.value ?? '';
+    if (selectedRespo !== '' && this.role === 'admin') {
+      console.log(selectedRespo)
+      this.teams=[]
+      this.subTeams=[]
+      this.userForm.get('idparentTeam')?.setValue(null);
+      this.userForm.get('idTeam')?.setValue(null);
+      this.loadTeamsByRespo(Number(selectedRespo))
+      this.myId=Number(selectedRespo)
+
+      
+    }
+  }
+
   loadTeamsByRespo(idRespo: number): void {
     const teams: any = localStorage.getItem('teams');
     const parsedTeams = JSON.parse(teams);
-    if (parsedTeams) {
+    if (parsedTeams && this.role !== 'admin') {
       this.teams = parsedTeams;
     } else {
       this.TeamsService.getTeamsByRespo(idRespo).subscribe(
@@ -227,6 +253,7 @@ export class ModalComponent implements OnInit {
   changeTeamMode() {
     this.showTeamField = !this.showTeamField;
   }
+
   async addTeam(isSubTeam: boolean) {
     if (isSubTeam) {
       this.changeSubTeamMode();
@@ -255,7 +282,7 @@ export class ModalComponent implements OnInit {
     ).subscribe({
       next: async (team) => {
         this.teams.push(team);
-        isSubTeam ? this.newSubTeam : this.newTeamName = ''
+        isSubTeam ? this.newSubTeam : (this.newTeamName = '');
         // Handle success, reset form or refresh data as needed
         if (!isSubTeam) {
           localStorage.removeItem('teams');
@@ -271,47 +298,41 @@ export class ModalComponent implements OnInit {
         // Handle error
       },
     });
-
-   
   }
+
   deleteTeam(isSubteam: boolean) {
-    let id: number=-1;
+    let id: number = -1;
     if (isSubteam && this.selectedSubTeamId) {
       id = this.selectedSubTeamId;
     } else {
       if (this.selectedTeamId) {
         id = this.selectedTeamId;
-      }
-      else return
+      } else return;
     }
     this.TeamsService.deleteTeam(id).subscribe({
-       next: async (res) => {
+      next: async (res) => {
         if (!isSubteam) {
-         
           localStorage.removeItem('teams');
           this.loadTeamsByRespo(this.myId);
-          this.selectedTeamId=null
+          this.selectedTeamId = null;
         } else {
-          
           if (this.selectedTeamId) {
             await this.loadSubTeamsByRespo(this.myId, this.selectedTeamId);
           }
-          this.selectedSubTeamId=null
+          this.selectedSubTeamId = null;
         }
 
-        
-    
         // Log the current state of subTeams to verify
         console.log('Updated subTeams:', this.subTeams);
-    
+
         // Clear the error message and handle success
         this.ErrorMsg = '';
       },
       error: (err) => {
-        this.ErrorMsg=err
+        this.ErrorMsg = err;
         console.error('Error adding team:', err);
         // Handle error
       },
-    })
+    });
   }
 }

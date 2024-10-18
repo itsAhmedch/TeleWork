@@ -85,7 +85,7 @@ export class UserService {
     );
   }
 
-  getRespoList() {
+  getRespoList():any {
     return this.http.get(`${this.apiUrl}/user/get-Respo`).pipe(
       catchError((error) => {
         console.error('Error fetching responsibles:', error);
@@ -124,4 +124,6 @@ export class UserService {
       })
     );
   }
+
+ 
 }
