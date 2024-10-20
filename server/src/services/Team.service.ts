@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Team } from './../entities/Team.entity';
 import { CreateTeamDto, UpdateTeamDto } from './../dto/Team.dto';
 import { User } from './../entities/user.entity';
@@ -82,6 +82,8 @@ export class TeamService {
 
   // Find teams by responsable user ID
   async findTeamByRespo(responsableId: number): Promise<Team[]> {
+    console.log(responsableId);
+    
     try {
       const teams = await this.teamRepository.find({
         where: {
@@ -217,4 +219,29 @@ export class TeamService {
     }
   }
   
+  // Helper function to recursively fetch child team IDs
+  async getAllTeamIdsWithChildren(
+    idTeams: number[],
+  ): Promise<number[]> {
+    // Step 1: Fetch all the teams and their children
+    const teamsWithChildren = await this.teamRepository.find({
+      where: { parentTeam: { id: In(idTeams) } }, // Assuming parentTeam is the relation to the parent team
+      select: ['id'], // Only need team IDs
+    });
+
+    const childTeamIds = teamsWithChildren.map((team) => team.id); // Extract child team IDs
+
+    // Step 2: If there are no more child teams, return the original IDs
+    if (childTeamIds.length === 0) {
+      return idTeams;
+    }
+
+    // Step 3: Recursively fetch subteams of the current child teams
+    const nestedChildTeamIds =
+      await this.getAllTeamIdsWithChildren(childTeamIds);
+
+    // Step 4: Return all IDs (original team IDs + child team IDs)
+    return [...idTeams, ...nestedChildTeamIds];
+  }
+
 }

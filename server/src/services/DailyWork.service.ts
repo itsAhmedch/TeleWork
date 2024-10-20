@@ -105,14 +105,27 @@ export class DailyWorkService {
       order: { id: 'DESC' },
       select: ['id', 'workStatus', 'date', 'time'], // Select necessary fields including id
     });
-
+  
+    // Check if lastDailyWork is null
+    if (!lastDailyWork) {
+      // Handle the case where no daily work is found
+      return {
+        date: null,
+        time: null,
+        status: null,
+        currentDate: new Date(),
+        message: 'No daily work found for this user.',
+      };
+    }
+  
     const MyInfo = {
       date: lastDailyWork.date,
       time: lastDailyWork.time,
       status: lastDailyWork.workStatus,
       currentDate: new Date(),
-      
     };
+  
     return MyInfo;
   }
+  
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, UseGuards, Req, Query, Res, ForbiddenException } from '@nestjs/common';
 import { DailyWorkService } from 'src/services/DailyWork.service';
 import { CreateDailyWorkDto } from 'src/dto/DailyWork.dto';
 import { DailyWork } from 'src/entities/DailyWork.entity';
@@ -10,6 +10,7 @@ import { RolesGuard } from 'src/guards/roles-guards';
 import { hasRoles } from 'src/guards/decorator/roles.decorator';
 import { authService } from 'src/services/auth.service';
 import { get } from 'http';
+import { ExtractDataService } from 'src/services/ExtractData.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 
@@ -19,6 +20,7 @@ export class DailyWorkController {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private authService: authService,
+    private extractDataService: ExtractDataService,
   ) {}
 
   @Post()
@@ -65,5 +67,29 @@ export class DailyWorkController {
   @hasRoles('respo','admin')
   async findByCollab(@Param('id') id: number): Promise<DailyWork[]> {
     return this.DailyWorkService.findByCollab(id);
+  }
+
+
+  @Get('/exportTeamTimes')
+  @hasRoles('admin','respo')
+  async exportTeamPlanToExcel(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('idRespo') idRespo: number,
+    @Query('idTeam') teamId: number,
+    @Query('start') start: string,
+    @Query('end') end: string,
+  ) {
+    
+    console.log(idRespo,teamId,start,end);
+    
+    const token = await this.authService.decode(req);
+
+    
+    if (token.role === 'respo' && idRespo!= token.id) {
+      throw new ForbiddenException(`You are not allowed to perform this action`);
+    }
+
+    return await this.extractDataService.ExtractTimes(res,idRespo,teamId, start, end);
   }
 }

@@ -30,7 +30,7 @@ export class CalendarComponent implements OnInit {
   MyStatus: boolean = false;
   showCaptcha: boolean = false;
   captchaPassed: boolean = false;
-  durationOfStatus:string='';
+  durationOfStatus: string = '';
   private intervalId: any; // Store the interval ID for clearing later
   // reCAPTCHA site key from Google
   siteKey: string = environment.RECAPTCHA_SITE_KEY;
@@ -45,6 +45,10 @@ export class CalendarComponent implements OnInit {
     this.checkIfMobile();
   }
 
+  checkIfMobile() {
+    this.isMobile = window.innerWidth < 768; // Adjust width as needed
+  }
+
   ngOnInit(): void {
     this.generateCalendar(this.currentMonth, this.currentYear);
     this.generatePreviousCalendar(this.previousMonth, this.previousYear);
@@ -52,6 +56,8 @@ export class CalendarComponent implements OnInit {
     this.checkIfMobile();
     this.GetStatusInfo();
   }
+
+
 
   GetStatusInfo() {
     this.dailyWorkService.getStatus().subscribe((MyInfo) => {
@@ -61,23 +67,33 @@ export class CalendarComponent implements OnInit {
       this.MyStatus = MyInfo.status;
       const lastWorkDate: string = MyInfo.date;
       const lastworkTime: string = MyInfo.time;
-      this.durationOfStatus=this.getDuration(lastWorkDate,lastworkTime,this.currentDate)
+      this.durationOfStatus = this.getDuration(
+        lastWorkDate,
+        lastworkTime,
+        this.currentDate
+      );
 
-        // Update duration every minute
-        this.intervalId = setInterval(() => {
-          // Recalculate current date every time to reflect real-time change
-          this.currentDate = new Date();
-          this.durationOfStatus = this.getDuration(lastWorkDate, lastworkTime, this.currentDate);
-        }, 60000); // Update every 60 seconds (1 minute)
-   
+      // Update duration every minute
+      this.intervalId = setInterval(() => {
+        // Recalculate current date every time to reflect real-time change
+        this.currentDate = new Date();
+        this.durationOfStatus = this.getDuration(
+          lastWorkDate,
+          lastworkTime,
+          this.currentDate
+        );
+      }, 60000); // Update every 60 seconds (1 minute)
     });
   }
-  getDuration(lastWorkDate:string,lastworkTime:string,currentDateTime:Date) {
+  getDuration(
+    lastWorkDate: string,
+    lastworkTime: string,
+    currentDateTime: Date
+  ) {
     // Assuming lastWorkDate is a string (e.g., '2024-10-19') and lastworkTime is a string (e.g., '14:30')
     // Combine lastWorkDate and lastworkTime into a valid Date object
     const lastWorkDateTime = new Date(`${lastWorkDate}T${lastworkTime}:00`); // 'T' is for time format in ISO 8601
 
-  
     // Get the difference in milliseconds between current date and last work date-time
     const diffInMs = currentDateTime.getTime() - lastWorkDateTime.getTime();
 
@@ -93,9 +109,8 @@ export class CalendarComponent implements OnInit {
       .toString()
       .padStart(2, '0')}m`;
 
-   
     console.log(duration); // Outputs the duration in hh:mm format
-    return duration
+    return duration;
   }
 
   ngOnDestroy() {
@@ -103,30 +118,21 @@ export class CalendarComponent implements OnInit {
       clearInterval(this.intervalId); // Clear the interval to avoid memory leaks
     }
   }
-  checkIfMobile() {
-    this.isMobile = window.innerWidth < 768; // Adjust width as needed
-  }
-
-  closeCaptcha() {
-    this.showCaptcha = false; // Close the modal
-  }
-
-  // Call this method to show the captcha
-  showCaptchaModal() {
-    this.showCaptcha = true;
-  }
+  
+// -------------------------------------------------------------------
+ 
   sendWorkStatus() {
     if (this.captchaPassed) {
       console.log('Work status has been updated!');
       this.dailyWorkService.sendWorkStatus().subscribe((res) => {
         this.MyStatus = !this.MyStatus;
-        this.durationOfStatus='00h00m'
+        this.durationOfStatus = '00h00m';
       });
     } else {
       this.showCaptcha = true; // Show CAPTCHA if it hasn't been passed
     }
   }
-
+ 
   onCaptchaResolved(captchaResponse: any) {
     if (captchaResponse) {
       this.captchaPassed = true;
@@ -135,7 +141,15 @@ export class CalendarComponent implements OnInit {
       this.captchaPassed = false;
     }
   }
+  closeCaptcha() {
+    this.showCaptcha = false; // Close the modal
+  }
 
+  // Call this method to show the captcha
+  showCaptchaModal() {
+    this.showCaptcha = true;
+  }
+// ----------------------------------------------------------------------------------------------
   // Method to generate current month calendar
   generateCalendar(month: number, year: number): void {
     const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -253,7 +267,7 @@ export class CalendarComponent implements OnInit {
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}${day}`;
   }
-
+// ---------------------------------------------------------------------
   getMyWorkingDays() {
     this.planService.getMyWorkingDays().subscribe((days: any) => {
       this.myDays = days;

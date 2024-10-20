@@ -29,13 +29,18 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    try {
-      const team = await this.teamRepository.findOne({
-        where: { id: createUserDto.idTeam },
-      });
-      if (!team) {
-        throw new BadRequestException('Team not found');
-      }
+    let team 
+   
+      
+      try {
+        if (createUserDto.role !=="admin" && createUserDto.role !== "respo" ) {
+         team = await this.teamRepository.findOne({
+          where: { id: createUserDto.idTeam },
+        });
+        if (!team) {
+          throw new BadRequestException('Team not found');
+        }}
+      
       // Create the user entity and set the team
       const user = this.userRepository.create({
         ...createUserDto,
@@ -50,7 +55,7 @@ export class UserService {
       console.log(error);
       throw new BadRequestException(error);
     }
-  }
+    }
 
   async findAll(): Promise<User[]> {
     try {
@@ -154,6 +159,7 @@ export class UserService {
         { id: In(userIds), lastName: Like(`%${search}%`) },
         { id: In(userIds), cin: Like(`%${search}%`) },
         { id: In(userIds), team: { name: Like(`%${search}%`) } },
+        { id: In(userIds), role: Like(`%${search}%`)  },
         {
           id: In(userIds),
           team: { parentTeam: { name: Like(`%${search}%`) } },
@@ -341,14 +347,19 @@ export class UserService {
         throw new NotFoundException(`User  not found`);
       }
 
+      if((existingUser.role === 'respo' &&updateUserDto.role&&updateUserDto.role !==existingUser.role )  || updateUserDto.role === 'respo'  ){
+        throw new NotFoundException(`you cannot  change the role`);
+      }
       if (updateUserDto.role && updateUserDto.role === 'leader') {
         const leader = await this.userRepository.findOneBy({
           team: { id: existingUser.team.id },
         });
         if (!leader) {
+         
           throw new NotFoundException(`This team had a leader`);
         }
       }
+
 
       const updatedUser = this.userRepository.create({
         ...existingUser,

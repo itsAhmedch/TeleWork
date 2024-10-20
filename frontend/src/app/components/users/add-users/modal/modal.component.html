@@ -112,6 +112,7 @@
         <div class="form-group mb-3">
           <label for="roleSelect">Select Role</label>
           <select formControlName="role" id="roleSelect" class="form-control">
+            <option></option>
             <option>collab</option>
             <option>leader</option>
             <option *ngIf="role == 'admin'" value="respo">responsable</option>
@@ -124,7 +125,7 @@
         
 
             <select
-              *ngIf="!showTeamField"
+             
               formControlName="idresponsible"
               id="responsible"
               class="form-control"

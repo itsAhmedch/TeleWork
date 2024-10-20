@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, NotFoundException, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, NotFoundException, UseGuards, Req, ForbiddenException, Query, Res } from '@nestjs/common';
 import { PlanService } from 'src/services/Plan.service';
 import { authService } from 'src/services/auth.service';
 import { CreatePlanDto, UpdatePlanDto } from 'src/dto/Plan.dto';
@@ -10,14 +10,17 @@ import { User } from 'src/entities/user.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { RolesGuard } from 'src/guards/roles-guards';
 import { hasRoles } from 'src/guards/decorator/roles.decorator';
+import { ExtractDataService } from 'src/services/ExtractData.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 
-@Controller('plan/')
+@Controller('plan')
 export class PlanController {
 
-  constructor(private readonly planService: PlanService,
+  constructor(
+    private readonly planService: PlanService,
     private readonly authService: authService,
+    private readonly extractDataService: ExtractDataService,
     @InjectRepository(Team)
     private readonly teamRepository: Repository<Team>,
     @InjectRepository(User)
@@ -105,4 +108,28 @@ findAll(@Body() body: { isProposal: boolean }): Promise<Plan[]> {
   remove(@Param('id') id: number): Promise<void> {
     return this.planService.remove(id);
   }
+
+  @Get('/exportTeamPlanToExcel')
+  @hasRoles('admin','respo')
+  async exportTeamPlanToExcel(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('idRespo') idRespo: number,
+    @Query('idTeam') teamId: number,
+    @Query('start') start: string,
+    @Query('end') end: string,
+  ) {
+    
+    console.log(idRespo,teamId,start,end);
+    
+    const token = await this.authService.decode(req);
+
+    
+    if (token.role === 'respo' && idRespo!= token.id) {
+      throw new ForbiddenException(`You are not allowed to perform this action`);
+    }
+
+    return await this.extractDataService.ExtractPlan(res,idRespo,teamId, start, end);
+  }
+
 }

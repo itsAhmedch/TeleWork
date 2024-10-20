@@ -42,7 +42,7 @@ export class UserController {
   @hasRoles('respo', 'admin')
   @Post()
   async create(@Body() createUserDto: any) {
-    console.log(createUserDto);
+
     const user = await this.userRepository.findOneBy({
       cin: createUserDto.cin,
     });
@@ -56,8 +56,9 @@ export class UserController {
         throw new NotFoundException(`email already exists`);
       }
     }
+console.log('ffffffffff');
 
-    if (createUserDto.role === 'collab') {
+    if (createUserDto.role === 'collab' || createUserDto.role === 'leader') {
       if (createUserDto.idTeam) {
         const Team = await this.teamRepository.findOneBy({
           id: createUserDto.idTeam,
@@ -67,7 +68,7 @@ export class UserController {
         }
       } else throw new NotFoundException(`idTeam should not be empty`);
     }
-
+    console.log('fffvvvvvvvvvvv');
     if (createUserDto.role === 'leader') {
       if (createUserDto.idTeam) {
         const leader = await this.userRepository.findOneBy({

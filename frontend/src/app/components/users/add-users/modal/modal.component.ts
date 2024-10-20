@@ -63,7 +63,7 @@ export class ModalComponent implements OnInit {
       lastName: new FormControl('', Validators.required),
       idresponsible: new FormControl('', Validators.required),
       idparentTeam: new FormControl('', Validators.required),
-      idTeam: new FormControl({ value: '', disabled: true }),
+      idTeam: new FormControl(''),
       role: new FormControl('', Validators.required),
     });
   }
@@ -71,22 +71,28 @@ export class ModalComponent implements OnInit {
   async ngOnInit() {
     const tokenData = this.AuthService.getTokenData();
     this.role = tokenData.role;
-    console.log(this.role);
-    
-    if (this.role != 'admin') {
-      
+
+    if (this.role !== 'admin') {
       this.myId = tokenData.id;
       this.loadTeamsByRespo(this.myId);
-    }
-    else{
+    } else {
       await this.loadResponsibles();
     }
 
     if (this.editMode && this.userData) {
       this.title = 'Edit User';
-      console.log(this.userData);
-
       this.userForm.patchValue(this.userData);
+      // Disable role change for responsibles
+
+      // Disable role change for responsibles and allow only "collab" or "leader"
+      if (this.userData.role === 'respo') {
+        this.userForm.get('role')?.disable(); // Disable role change for responsibles
+      } else {
+        this.userForm.get('role')?.enable(); // Enable role selection for other roles
+        this.userForm.get('role')?.setValue(this.userData.role); // Set to current role
+        this.toggleEditRoleValidator();
+      }
+
       this.checkEditValidators();
     }
 
@@ -95,6 +101,47 @@ export class ModalComponent implements OnInit {
     });
   }
 
+  toggleEditRoleValidator() {
+    const roleControl = this.userForm.get('role');
+
+    // If in edit mode and role is not "respo", restrict selection to "collab" or "leader"
+    if (this.editMode) {
+      roleControl?.setValidators([
+        Validators.required,
+        Validators.pattern('^(collab|leader)$'), // Only allow 'collab' or 'leader'
+      ]);
+      roleControl?.updateValueAndValidity();
+    }
+  }
+
+  toggleTeamFields(role: string) {
+    const teamControl = this.userForm.get('idparentTeam');
+    const subTeamControl = this.userForm.get('idTeam');
+    const idresponsible = this.userForm.get('idresponsible');
+
+    if (role == 'respo') {
+      idresponsible?.disable(); // Disable the responsible field for responsibles
+      teamControl?.disable();
+      subTeamControl?.disable();
+      teamControl?.setValidators([]); // Clear validators for teams and subteams
+      subTeamControl?.setValidators([]);
+      console.log(role);
+    } else {
+      if (!this.editMode) {
+        idresponsible?.enable(); // Enable responsible field for other roles
+        teamControl?.enable();
+        teamControl?.setValidators([Validators.required]); // Require team field for non-responsibles
+      }
+    }
+
+    // Additional checks for collab or leader roles
+    if (role === 'collab' || role === 'leader') {
+      idresponsible?.enable(); // Enable responsible field for collabs and leaders
+    }
+
+    teamControl?.updateValueAndValidity();
+    subTeamControl?.updateValueAndValidity();
+  }
   checkEditValidators() {
     Object.keys(this.userForm.controls).forEach((key) => {
       if (!this.userData[key]) {
@@ -104,36 +151,9 @@ export class ModalComponent implements OnInit {
     });
   }
 
-  toggleTeamFields(role: string) {
-    const teamControl = this.userForm.get('idparentTeam');
-    const subTeamControl = this.userForm.get('idTeam');
-    const idresponsible = this.userForm.get('idresponsible');
-
-    if (role === 'respo') {
-      idresponsible?.disable(); // Disable the responsible field
-      teamControl?.disable(); // Disable the team field
-      subTeamControl?.disable(); // Disable the subteam field
-      teamControl?.setValidators([]); // Make team field optional
-      subTeamControl?.setValidators([]); // Make subteam field optional
-    } else {
-      teamControl?.enable(); // Enable the team field
-      teamControl?.enable(); // Enable the team field
-      subTeamControl?.enable(); // Enable the subteam field
-      teamControl?.setValidators([Validators.required]); // Add validation back if needed
-      subTeamControl?.setValidators([Validators.required]); // Add validation back if needed
-    }
-    teamControl?.updateValueAndValidity(); // Update the validity state
-    subTeamControl?.updateValueAndValidity(); // Update the validity state
-  }
   async saveUser() {
     if (this.userForm.valid) {
       const formData = this.userForm.value;
-      formData.idTeam = Number(formData.idTeam);
-      formData.idparentTeam = Number(formData.idparentTeam);
-
-      if (!formData.idTeam && this.userForm.get('role')?.value != 'respo') {
-        formData.idTeam = formData.idparentTeam;
-      }
 
       if (this.editMode) {
         const modifiedFields: any = {};
@@ -157,6 +177,11 @@ export class ModalComponent implements OnInit {
           }
         );
       } else {
+        if (!formData.idTeam && this.userForm.get('role')?.value != 'respo') {
+          formData.idTeam = Number(formData.idTeam);
+          formData.idparentTeam = Number(formData.idparentTeam);
+          formData.idTeam = formData.idparentTeam;
+        }
         this.userService.addUser(formData).subscribe(
           (user) => {
             console.log({ user });
@@ -189,15 +214,13 @@ export class ModalComponent implements OnInit {
   onRespoChange() {
     const selectedRespo = this.userForm.get('idresponsible')?.value ?? '';
     if (selectedRespo !== '' && this.role === 'admin') {
-      console.log(selectedRespo)
-      this.teams=[]
-      this.subTeams=[]
+      console.log(selectedRespo);
+      this.teams = [];
+      this.subTeams = [];
       this.userForm.get('idparentTeam')?.setValue(null);
       this.userForm.get('idTeam')?.setValue(null);
-      this.loadTeamsByRespo(Number(selectedRespo))
-      this.myId=Number(selectedRespo)
-
-      
+      this.loadTeamsByRespo(Number(selectedRespo));
+      this.myId = Number(selectedRespo);
     }
   }
 

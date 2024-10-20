@@ -10,6 +10,7 @@ import { Plan } from 'src/entities/plan.entity';
 import { CreatePlanDto, UpdatePlanDto } from 'src/dto/Plan.dto';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
+import { TeamService } from './Team.service';
 
 @Injectable()
 export class PlanService {
@@ -20,6 +21,7 @@ export class PlanService {
     private userRepository: Repository<User>,
     @InjectRepository(Team)
     private teamRepository: Repository<Team>,
+    private teamService:TeamService
   ) {}
 
   async create(createPlanDto: CreatePlanDto, team, collab) {
@@ -128,9 +130,9 @@ export class PlanService {
 
   async getPlans(idTeams: number[], isProposal: boolean): Promise<any> {
     // Step 1: Fetch all the child teams (subteams) related to the specified team IDs
-    const allTeamIds = await this.getAllTeamIdsWithChildren(idTeams);
+    const allTeamIds = await this.teamService.getAllTeamIdsWithChildren(idTeams)
 
-    console.log(idTeams, ' ', isProposal);
+ 
 
     // Step 2: Fetch all users belonging to the specified teams and their subteams
     const users = await this.userRepository.find({
@@ -162,31 +164,7 @@ export class PlanService {
     
   }
 
-  // Helper function to recursively fetch child team IDs
-  private async getAllTeamIdsWithChildren(
-    idTeams: number[],
-  ): Promise<number[]> {
-    // Step 1: Fetch all the teams and their children
-    const teamsWithChildren = await this.teamRepository.find({
-      where: { parentTeam: { id: In(idTeams) } }, // Assuming parentTeam is the relation to the parent team
-      select: ['id'], // Only need team IDs
-    });
-
-    const childTeamIds = teamsWithChildren.map((team) => team.id); // Extract child team IDs
-
-    // Step 2: If there are no more child teams, return the original IDs
-    if (childTeamIds.length === 0) {
-      return idTeams;
-    }
-
-    // Step 3: Recursively fetch subteams of the current child teams
-    const nestedChildTeamIds =
-      await this.getAllTeamIdsWithChildren(childTeamIds);
-
-    // Step 4: Return all IDs (original team IDs + child team IDs)
-    return [...idTeams, ...nestedChildTeamIds];
-  }
-
+  
   formatDateToYYYYMMDD(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero if needed

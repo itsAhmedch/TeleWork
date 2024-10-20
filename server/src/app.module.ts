@@ -13,6 +13,7 @@ import { DailyWork } from './entities/DailyWork.entity'; // Add this import if y
 import { Plan } from './entities/plan.entity';
 import { AuthModule } from './modules/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { UploadModule } from './modules/upload.module';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { ConfigModule } from '@nestjs/config';
     TeamModule,
     DailyWorkModule,
     PlanModule,
-    AuthModule
+    AuthModule,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [
