@@ -1,0 +1,491 @@
+/* Import Google font - Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0 10px;
+  background: linear-gradient(135deg, #8e44ad, #9b59b6); /* Softer gradient */
+}
+
+/* Wrapper Styles */
+.wrapper {
+  flex: 2; /* Take more space for the calendar */
+  min-width: 400px; /* Ensure enough space for calendar content */
+  width: 100%; /* Full width on smaller screens */
+  max-width: 900px; /* Max width for larger screens */
+  background: #fff;
+  border-radius: 15px; /* Softer corners */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15); /* Subtle shadow */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header Calendar Container */
+.header-calendar-container {
+  display: flex; /* Use flex to align calendars side by side */
+  justify-content: space-between; /* Space between the calendars */
+  flex-wrap: wrap; /* Allow wrapping for smaller screens */
+}
+
+/* Calendar Container */
+.calendar-container {
+  flex: 1; /* Allow calendars to grow and fill the available space */
+  margin: 10px; /* Add margin for spacing between the calendars */
+  min-width: 250px; /* Minimum width for each calendar */
+}
+
+/* Header Styles */
+.wrapper header {
+  display: flex;
+  align-items: center;
+  padding: 25px 30px 10px;
+  justify-content: space-between;
+}
+
+header .icons {
+  display: flex;
+}
+
+header .icons span {
+  height: 38px;
+  width: 38px;
+  margin: 0 5px; /* Added more space between icons */
+  cursor: pointer;
+  color: #666; /* Softer icon color */
+  text-align: center;
+  line-height: 38px;
+  font-size: 1.9rem;
+  user-select: none;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+header .icons span:hover {
+  background: #e0e0e0; /* Slightly darker hover */
+  color: #000;
+}
+
+header .current-date {
+  font-size: 1.45rem;
+  font-weight: 500;
+  color: #444; /* Slightly darker */
+}
+
+/* Calendar Styles */
+.calendar {
+  padding: 20px;
+}
+
+.calendar ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  text-align: center;
+}
+
+.calendar .days {
+  margin-bottom: 20px;
+}
+
+.calendar li {
+  color: #444; /* Darker font */
+  width: calc(100% / 7); /* 7 days in a week */
+  font-size: 1.1rem;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.calendar .weeks li {
+  font-weight: 500;
+  color: #666;
+}
+
+.calendar .days li {
+  z-index: 1;
+  cursor: pointer;
+  margin-top: 30px;
+}
+
+.days li.inactive {
+  color: #ccc; /* Softer inactive color */
+}
+
+.days li.active {
+  color: #fff;
+}
+
+
+.days li::before {
+  position: absolute;
+  content: '';
+  left: 50%;
+  top: 50%;
+  height: 40px;
+  width: 40px;
+  z-index: -1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: background-color 0.3s ease;
+}
+
+.days li.active::before {
+  background: #7d3c98; /* A softer but attractive purple */
+}
+
+.days li:not(.active):hover::before {
+  background: #ececec; /* Lighter hover color */
+}
+
+.bottom-bar {
+  display: flex; /* Ensure flex layout */
+  justify-content: space-between; /* Space items evenly */
+  align-items: center; /* Align items vertically centered */
+  padding: 10px; /* Add padding for better spacing */
+  text-align: center; /* Center text in the footer */
+}
+.right-side {
+  display: flex; /* Use flex for alignment */
+  align-items: center; /* Center items vertically */
+}
+/* Flex containers for mobile responsiveness */
+.left-side {
+  display: flex;
+  align-items: center;
+}
+
+.button {
+  padding: 10px 20px;
+  background-color: #3498db; /* A vibrant blue for the button */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.button:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.takeBreak{
+  padding: 10px 20px;
+  background-color: #db3232; /* A vibrant blue for the button */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+.takeBreak:hover {
+  background-color: #b92929;
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+.working-days-range {
+  font-size: 1rem;
+  color: #666;
+}
+
+.working-days-range label {
+  font-weight: 500;
+  color: #444;
+}
+
+/* Highlight Styles */
+.highlight {
+  position: relative;
+  color: #fff !important;
+  cursor: pointer;
+}
+.highlight:hover {
+  transition: background 0.3s ease;
+  color: #444 !important;
+}
+
+.highlight::before {
+  position: absolute;
+  content: '';
+  left: 50%;
+  top: 50%;
+  height: 40px;
+  width: 40px;
+  z-index: -1;
+  border-radius: 50%;
+  color: #000 !important;
+  background: linear-gradient(135deg, #00eeff, #046bb5); /* Gradient green highlight */
+  transform: translate(-50%, -50%);
+  transition: background 0.3s ease;
+}
+
+.days li.today {
+  color: #fff;
+}
+.days li.today:hover {
+  color: #000000;
+}
+
+
+.days li.today::before {
+  background: linear-gradient(135deg, #f4d03f, #f39c12); /* Gradient yellow for today */
+}
+
+
+
+.days li.isOldWorkingDay::before {
+  
+  background: linear-gradient(135deg, #48f35b, #019125); 
+}
+
+
+.days li.isProposalDay {
+  
+  color: rgb(248, 33 ,33 ,0.71) !important; 
+  font-weight: bold;
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+
+   .bottom-bar {
+    flex-direction: column; /* Stack items vertically */
+    align-items: flex-start; /* Align items to the start */
+  }
+
+  .left-side {
+    margin-bottom: 10px; /* Add space below the 'Today' button */
+  }
+
+
+
+  .right-side {
+    /* Optional: Add margin or padding for the right-side items if needed */
+    margin-top: 10px; /* Space above the right side items */
+  }
+
+  .center span {
+    font-size: 0.85rem; /* Smaller font size for mobile */
+  }
+  .header-calendar-container {
+    flex-direction: column; /* Stack calendars on mobile */
+  }
+  .center span {
+    font-size: 0.85rem; /* Adjust font size for mobile */
+    /* You can adjust the size as needed */
+    color: #666; /* Optional: change color to match your design */
+  }
+
+  .calendar-container {
+    width: 100%; /* Full width on mobile */
+    margin: 5px 0; /* Reduce margin for better spacing */
+  }
+
+  .calendar-container.calendar-2 {
+    display: none; /* Hide second calendar on mobile */
+  }
+
+  .bottom-bar {
+    flex-direction: row; /* Change to row for single line display */
+    justify-content: space-between; /* Space items evenly */
+    align-items: center; /* Align items vertically centered */
+    flex-wrap: nowrap; /* Prevent wrapping of items */
+  }
+
+  .working-days-range {
+    margin-bottom: 0; /* Remove bottom margin */
+  }
+
+  button {
+    margin: 5px; /* Add horizontal margin for buttons */
+    width: auto; /* Set buttons to auto width */
+  }
+
+  header .current-date {
+    font-size: 1.25rem; /* Smaller font size for mobile */
+  }
+
+  header .icons span {
+    font-size: 1.5rem; /* Smaller icon size */
+    height: 30px; /* Adjust icon height */
+    width: 30px; /* Adjust icon width */
+    line-height: 30px; /* Center icon text */
+  }
+
+  .wrapper2 {
+    flex-direction: column; /* Stack calendar and info card on mobile */
+  }
+
+  .info-card {
+    margin-top: 20px; /* Add space above the info card when stacked */
+    width: 100%; /* Full width on mobile */
+  }
+  .container {
+    flex-direction: column; /* Stack the elements on small screens */
+  }
+
+  .wrapper, .wrapper2 {
+    width: 100%; /* Full width for both sections */
+  }
+}
+
+.hidden {
+  display: none; 
+}
+
+.time-display {
+  margin-right: 10px; /* Add space between time display and button */
+  font-size: 1.2rem; /* Adjust font size as needed */
+  color: #666; /* Set a softer color */
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it appears above other elements */
+}
+
+.modal-content {
+  background-color: #fff; /* White background for the modal */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  width: 90%; /* Make width responsive */
+  max-width: 400px; /* Limit max width */
+  text-align: center; /* Center the text inside */
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.modal-title {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333; /* Dark text color */
+}
+
+.captcha-container {
+  margin: 0 auto 15px auto; /* Centering the container */
+  display: flex;
+  justify-content: center; /* Center the captcha */
+  align-items: center; /* Center vertically */
+  width: 100%; /* Ensure full width */
+}
+
+.modal-close {
+  background-color: #007bff; /* Primary color */
+  color: white; /* White text */
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modal-close:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .modal-title {
+    font-size: 16px; /* Adjust title font size */
+  }
+
+  .modal-close {
+    width: 100%; /* Full width on mobile */
+    padding: 12px; /* More padding for touch targets */
+  }
+
+  .captcha-container {
+    padding: 10px; /* Optional padding to avoid clipping */
+  }
+}
+
+
+
+// ---------------------- info style 
+
+
+
+/* Style for the info card */
+.info-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  margin: 10px;
+}
+
+.card-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.card-body ul {
+  list-style: none;
+  padding: 0;
+}
+
+.card-body li {
+  margin-bottom: 5px;
+}
+
+/* Global Styles */
+.wrapper2 {
+  display: flex; /* Use flexbox to align elements side by side */
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px; /* Add space between the calendar and the info card */
+  flex: 1; /* Take less space for the info card */
+  min-width: 300px;
+  border-radius: 15px; /* Softer corners */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15); /* Subtle shadow */
+}
+
+.calendar-container {
+  flex: 2; /* Calendar takes up more space */
+  min-width: 250px; /* Ensures the calendar doesn't get too small */
+}
+
+.info-card {
+  flex: 1; /* Info card takes less space */
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  max-width: 300px;
+  margin-left: 20px; /* Add space between calendar and info card */
+  min-width: 200px;
+  
+}
+
+
+.container {
+  display: flex;
+  // justify-content: space-between; /* Space between wrapper and wrapper2 */
+  gap: 20px; /* Add space between the two sections */
+  align-items: flex-start; /* Align both elements at the top */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+
+
+

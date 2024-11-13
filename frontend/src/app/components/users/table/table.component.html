@@ -1,0 +1,69 @@
+<div class="container">
+  <div class="table-responsive">
+    <div class="table-wrapper">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th *ngFor="let header of tableHeaders">{{ header }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Check if tableData is empty -->
+          <tr *ngIf="tableData.length === 0">
+            <td colspan="8" class="text-center">
+              <!-- Adjust the number to match the total columns -->
+              ----- Empty Table -----
+            </td>
+          </tr>
+          <tr *ngFor="let row of tableData">
+            <td>{{ row.cin }}</td>
+            <td>{{ row.name }}</td>
+            <td>{{ row.lastName }}</td>
+            <td>{{ row.email }}</td>
+            <td>{{ row.role }}</td>
+            <td>{{ row.team }}</td>
+            <td>{{ row.subteam }}</td>
+            <td>
+              <i
+                class="fas fa-edit text-warning"
+                style="cursor: pointer"
+                (click)="onEdit(row)"
+              ></i>
+              <i
+                class="fas fa-trash-alt text-danger"
+                style="cursor: pointer; margin-left: 10px"
+                (click)="onDelete(row.id)"
+              ></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="clearfix">
+        <ul class="pagination">
+          <li class="page-item" [class.disabled]="currentPage <= 1">
+            <a
+              (click)="changePage('Prev')"
+              [attr.aria-disabled]="currentPage <= 1"
+              style="cursor: pointer;"
+              >Previous</a
+            >
+          </li>
+          <li class="page-item">
+            <span class="page-link">{{ currentPage }}</span>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage >= totalPage">
+            <a
+              class="page-link"
+              (click)="changePage('Next')"
+              [attr.aria-disabled]="currentPage >= totalPage"
+              style="cursor: pointer;"
+              >Next</a
+            >
+          </li>
+        </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>

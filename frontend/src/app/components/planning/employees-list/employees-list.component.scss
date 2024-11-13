@@ -1,0 +1,37 @@
+/* Add this to your CSS file */
+.form-group-custom {
+  max-width: 160px; /* Limit width for larger screens */
+}
+
+/* Override max-width for mobile screens */
+@media (max-width: 767.98px) { /* Bootstrap's breakpoint for small devices */
+  .form-group-custom {
+      max-width: none; /* Remove max-width on mobile */
+      margin-bottom: 10px;
+  }
+}
+
+.d-flex {
+  display: flex; /* Ensure flex layout */
+}
+
+.align-items-center {
+  align-items: center; /* Center elements vertically */
+}
+
+.form-group {
+  margin: 0; /* Remove default margin for form groups */
+}
+
+.form-select {
+  margin-right: 10px; /* Add spacing between dropdowns */
+  min-width: 100px;
+  flex: 1; /* Allow dropdowns to grow */
+}
+
+/* Optional: Increase spacing between dropdowns on small devices */
+@media (max-width: 767.98px) {
+  .form-select {
+      margin-right: 0; /* Remove right margin on small devices */
+  }
+}

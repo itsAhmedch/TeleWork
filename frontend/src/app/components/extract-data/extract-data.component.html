@@ -1,0 +1,92 @@
+<form [formGroup]="Form" >
+  <div class="team-plan-container">
+    <h2>Download Team Plan</h2>
+
+    <div class="me-3" *ngIf="role === 'admin'">
+      <label>Responsible:</label>
+      <select
+        formControlName="responsible"
+        class="form-select"
+        (change)="onChangeRespo()"
+      >
+        <option
+          *ngFor="let responsible of responsibles"
+          [value]="responsible.id"
+        >
+          {{ responsible.fullname }}
+        </option>
+      </select>
+    </div>
+
+    <div class="me-3">
+      <label>Team:</label>
+      <select
+        class="form-select"
+        formControlName="team"
+        (change)="onChangeTeam()"
+      >
+        <option value="all">All</option>
+        <ng-container *ngFor="let team of teams">
+          <option [value]="team.id">{{ team.name }}</option>
+        </ng-container>
+      </select>
+    </div>
+
+    <div class="me-3">
+      <label>SubTeam:</label>
+      <select
+        class="form-select"
+        formControlName="subTeam"
+        (change)="onChangeSubTeams()"
+      >
+        <option value="all">All</option>
+        <ng-container *ngFor="let subTeam of subTeams">
+          <option [value]="subTeam.id">{{ subTeam.name }}</option>
+        </ng-container>
+      </select>
+    </div>
+
+    <div class="me-3">
+      <label>Choose:</label>
+      <select class="form-select" formControlName="choice">
+        <option value="plan">Planification</option>
+        <option value="times">Pointage</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="startDate">Start Date:</label>
+      <input
+        type="date"
+        id="startDate"
+        formControlName="startDate"
+        class="form-control"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="endDate">End Date:</label>
+      <input
+        type="date"
+        id="endDate"
+        formControlName="endDate"
+        class="form-control"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn-primary" (click)="downloadPlan()">
+      Download Plan
+    </button>
+  </div>
+</form>
+<app-toast></app-toast>
+<app-confirm
+  *ngIf="showModal"
+  [title]="'Error'"
+  [content]="ErrorMsg"
+  [btnText]="'ok'"
+  (confirm)="showModal = false"
+  (cancel)="showModal = false">
+</app-confirm>

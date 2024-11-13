@@ -1,0 +1,29 @@
+<div class="d-flex justify-content-between align-items-center">
+    <!-- Search bar takes up the remaining space -->
+    <div class="flex-grow-1 me-3">
+      <app-search (search)="searchUsers($event)"></app-search>
+    </div>
+  
+    <!-- Add button aligned to the right -->
+   
+   
+    <app-add-users (userModified)="onUserModified()"></app-add-users>
+  </div>
+  <app-table
+  [tableHeaders]="tableHeaders"
+  [tableData]="tableData"
+  [totalPage]="totalPage"
+  (editRow)="openEditModal($event)"
+  (deleteRow)="openDeleteModal($event)"
+  (Page)="onPageModified($event)" 
+></app-table>
+
+<app-confirm
+  *ngIf="showDeleteModal"
+  [title]="'Confirm Deletion'"
+  [content]="'Are you sure you want to delete this item?'"
+  [btnText]="'Delete'"
+  [itemId]="userId"
+  (confirm)="deleteUser()"
+  (cancel)="showDeleteModal = false">
+</app-confirm>

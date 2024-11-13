@@ -1,0 +1,154 @@
+<div class="container">
+  <div class="wrapper">
+    <div class="header-calendar-container">
+      <!-- Left Calendar (Previous Month) -->
+      <div
+        class="calendar-container mobile-calendar"
+        [ngClass]="{ hidden: isMobile }"
+      >
+        <header>
+          <p class="current-date">
+            {{ previousMonth + 1 }} / {{ previousYear }}
+          </p>
+        </header>
+        <div class="calendar">
+          <ul class="weeks">
+            <li *ngFor="let day of weekDays">{{ day }}</li>
+          </ul>
+          <ul class="days">
+            <li
+              *ngFor="let day of daysInPreviousMonth"
+              (click)="
+                day !== null &&
+                (isOldWorkingDay(day, previousMonth, currentYear) ||
+                    (isWorkingDay(day, previousMonth, currentYear) &&
+                      isToday(day, previousMonth, currentYear))) &&
+                  GetDAyInfo(day, previousMonth, currentYear)
+              "
+              [ngClass]="{
+                inactive: day === null,
+                isOldWorkingDay:
+                  day !== null && isOldWorkingDay(day, previousMonth, currentYear),
+                  isProposalDay:day !== null && isProposalDay(day, previousMonth, currentYear)&&!isWorkingDay(day, previousMonth, currentYear),
+                today:
+                  day !== null && isToday(day, previousMonth, previousYear),
+                highlight:
+                  day !== null && isWorkingDay(day, previousMonth, previousYear)
+              }"
+            >
+              {{ day }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Calendar (Current Month) -->
+      <div class="calendar-container">
+        <header>
+          <p class="current-date">{{ currentMonth + 1 }} / {{ currentYear }}</p>
+          <div class="icons">
+            <span
+              id="prev"
+              class="material-symbols-rounded"
+              (click)="changeMonth(-1)"
+              >&lt;</span
+            >
+            <span
+              id="next"
+              class="material-symbols-rounded"
+              (click)="changeMonth(1)"
+              >&gt;</span
+            >
+          </div>
+        </header>
+        <div class="calendar">
+          <ul class="weeks">
+            <li *ngFor="let day of weekDays">{{ day }}</li>
+          </ul>
+          <ul class="days">
+            <li
+              *ngFor="let day of daysInCurrentMonth"
+              (click)="
+                day !== null &&
+                  (isOldWorkingDay(day, currentMonth, currentYear) ||
+                    (isWorkingDay(day, currentMonth, currentYear) &&
+                      isToday(day, currentMonth, currentYear))) &&
+                  GetDAyInfo(day, currentMonth, currentYear)
+              "
+              [ngClass]="{
+                inactive: day === null,
+                isOldWorkingDay:
+                  day !== null && isOldWorkingDay(day, currentMonth, currentYear),
+                  isProposalDay:day !== null && isProposalDay(day, currentMonth, currentYear)&&!isWorkingDay(day, currentMonth, currentYear),
+                today: day !== null && isToday(day, currentMonth, currentYear),
+                highlight:
+                  day !== null && isWorkingDay(day, currentMonth, currentYear)
+              }"
+            >
+              {{ day }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bottom-bar">
+      <div class="left-side">
+        <button class="button" (click)="goToToday()">Today</button>
+      </div>
+      <div class="center">
+        <span *ngIf="myDays.length > 0"
+          >{{ workingDaysStart }} / {{ workingDaysEnd }}</span
+        >
+      </div>
+      <div class="right-side">
+        <button
+          *ngIf="isTodayWorkday()"
+          [ngClass]="{ button: !MyStatus, takeBreak: MyStatus }"
+          (click)="sendWorkStatus()"
+        >
+          {{ !MyStatus ? "Start Now" : "Take break" }}
+        </button>
+      </div>
+    </footer>
+
+    <!-- Modal Overlay -->
+    <div *ngIf="showCaptcha" class="modal-overlay" (click)="closeCaptcha()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3 class="modal-title">Please verify that you are human</h3>
+        <div class="captcha-container">
+          <re-captcha
+            (resolved)="onCaptchaResolved($event)"
+            [siteKey]="siteKey"
+          ></re-captcha>
+        </div>
+        <button type="button" class="modal-close" (click)="closeCaptcha()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="wraper2">
+    <div class="header-calendar-container">
+      <!-- Include your calendar content here -->
+      <!-- This will display the calendar as in the previous section -->
+    </div>
+
+    <!-- Info Card (Positioned on the right) -->
+    <div *ngIf="showInfo" class="info-card">
+      <div class="card-header">
+        <span>{{ selectedDayInfo }}</span>
+      </div>
+      <div class="card-body">
+        <ul *ngIf="DayInfo.length > 0">
+          <li *ngFor="let day of DayInfo">
+            {{ day.workStatus ? "Start: " : "Break: " }}{{ day.time }}
+          </li>
+          <li><b>duration : {{durationOfStatus}}</b></li>
+        </ul>
+        <span *ngIf="DayInfo.length === 0">not found</span>
+      </div>
+    </div>
+  </div>
+</div>

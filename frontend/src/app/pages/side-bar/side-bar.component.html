@@ -1,0 +1,111 @@
+<!--Main Navigation-->
+<header>
+  <!-- Sidebar -->
+  <nav
+       id="sidebarMenu"
+       class="collapse d-lg-block sidebar collapse bg-white"
+       *ngIf="this.MyInfo.role!='collab'"
+       >
+    <div class="position-sticky">
+      <div class="list-group list-group-flush mx-3 mt-4" *ngFor="let link of Links">
+        <a
+        
+           class="list-group-item list-group-item-action py-2 ripple"
+           aria-current="true"
+           [routerLink]="link.route"
+           routerLinkActive="active"
+           >
+          <i [class]="link.icon + ' nav_icon'"></i>
+          <span>{{ link.label }}</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Navbar -->
+  <nav
+       id="main-navbar"
+       class="navbar navbar-expand-lg navbar-light bg-white fixed-top"
+       >
+    <!-- Container wrapper -->
+    <div class="container-fluid">
+      <!-- Toggle button -->
+      <button
+              *ngIf="this.MyInfo.role!='collab'"
+              class="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#sidebarMenu"
+              aria-controls="sidebarMenu"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+              >
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Brand -->
+      <a class="navbar-brand" href="#">
+        <img
+             src="../../assets/Telework.png"
+             height="25"
+             alt=""
+             loading="eager"
+             />
+      </a>
+      
+  
+     <!-- Right links -->
+     <ul class="navbar-nav ms-auto d-flex flex-row align-items-center">
+      <!-- Visible on larger screens -->
+      <li class="nav-item me-4 d-none d-lg-block">
+        <span>{{MyInfo.username}} - {{MyInfo.role}}</span>
+      </li>
+
+      <!--  dropdown with name, role, and logout for mobile -->
+      <li class="nav-item dropdown me-3">
+        <a
+          class="nav-link dropdown-toggle"
+          href="#"
+          id="navbarDropdownMenuLink"
+          role="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+         
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+          <!-- Name and role in mobile -->
+          <li class="d-lg-none">
+            <span class="dropdown-item-text disabled" style="cursor: default;">
+              {{MyInfo.username}} <br>{{MyInfo.role}}
+            </span>
+          </li>
+          <!-- Logout option -->
+          <li>
+            <a class="dropdown-item" style="cursor: pointer;" (click)="openLogoutModel()">Logout</a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    </div>
+    <!-- Container wrapper -->
+  </nav>
+</header>
+
+<!--Main layout-->
+<main style="margin-top: 58px">
+  <div class="container pt-4">
+    <router-outlet></router-outlet>
+  </div>
+</main>
+
+<app-confirm
+  *ngIf="showLogoutModal"
+  [title]="'Confirm'"
+  [content]="'Are you sure you want to log out?'"
+  [btnText]="'logout'"
+  (confirm)="logout()"
+  (cancel)="showLogoutModal = false">
+</app-confirm>

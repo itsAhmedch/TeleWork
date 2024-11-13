@@ -1,0 +1,42 @@
+<div class="d-flex align-items-center flex-wrap">
+  <!-- Flex container to align items in a single line -->
+
+  <form [formGroup]="employeesForm" class="mb-0 w-100">
+    <div class="form-group row w-100">
+      <!-- Use row for responsive grid layout -->
+      
+      <!-- Responsible dropdown -->
+      <div class="form-group-custom col-md-4 col-12 mb-2" *ngIf="role === 'admin'">
+        <select formControlName="responsible" class="form-select" (change)="onRespoChange()">
+          <option value="" disabled [selected]="true">Responsibles</option>
+          <option value="">All Responsibles</option>
+          <ng-container *ngFor="let responsible of responsibles">
+            <option [value]="responsible.id">{{ responsible.fullname }}</option>
+          </ng-container>
+        </select>
+      </div>
+
+      <!-- Team dropdown -->
+      <div class="form-group-custom col-md-4 col-12 mb-2" *ngIf="role === 'respo' || role === 'admin'">
+        <select formControlName="team" class="form-select" (change)="onTeamChange(false)">
+          <option value="" disabled [selected]="true">Teams</option>
+          <option value="">All Teams</option>
+          <ng-container *ngFor="let team of teams">
+            <option [value]="team.id">{{ team.name }}</option>
+          </ng-container>
+        </select>
+      </div>
+
+      <!-- Subteam dropdown -->
+      <div class="form-group-custom col-md-4 col-12 mb-2" *ngIf="role === 'respo' || role === 'admin'">
+        <select formControlName="subTeam" class="form-select" (change)="onTeamChange(true)">
+          <option value="" disabled [selected]="true">Subteams</option>
+          <option value="">All Subteams</option>
+          <ng-container *ngFor="let subTeam of subTeams">
+            <option [value]="subTeam.id">{{ subTeam.name }}</option>
+          </ng-container>
+        </select>
+      </div>
+    </div>
+  </form>
+</div>

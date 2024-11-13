@@ -1,0 +1,143 @@
+
+.container{
+  margin: 0;
+  padding: 0;
+}
+
+/* General Styles */
+.normal-day {
+  background-color: #f9f9f9; /* Light grey background for normal days */
+}
+
+/* Ensure the table takes full width */
+table {
+  width: 100%;
+  font-size: 1em; /* Default font size for the table */
+  border-collapse: collapse; /* Make sure borders are collapsed */
+}
+
+/* Table cell alignment and padding */
+td,
+th {
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+  border-color: #e0e0e0; /* Light border for all cells */
+}
+
+/* First column (Employee names) with proper width */
+th:first-child,
+td:first-child {
+  white-space: nowrap;
+  width: 200px;
+  background-color: #ffffff; /* White background for employee column */
+  color: #333333; /* Darker text for contrast */
+  position: sticky;
+  left: 0;
+  z-index: 3; /* Ensure it stays on top of other content */
+}
+
+/* Table container for horizontal and vertical scrolling */
+.table-responsive {
+  height: calc(100vh - 210px);;
+  
+  overflow-x: auto;
+  overflow-y: auto;
+  margin-bottom: 15px; /* Space above the fixed bottom bar */
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  th,
+  td {
+      padding: 5px;
+  }
+
+  /* Font size adjustment for mobile */
+  table {
+      font-size: 0.9em;
+  }
+
+  /* Adjust width for mobile */
+  th:first-child,
+  td:first-child {
+      width: 150px;
+  }
+}
+
+/* Flexbox for centering text in cells */
+.text-center {
+  display: flex;
+  justify-content: center; /* Centers the content */
+  white-space: nowrap; /* Prevents line breaks */
+}
+
+/* Working Day Style */
+.working-day {
+  background-color: #e0e9fa; /* Light cyan background for working days */
+  cursor: pointer; /* Change cursor to pointer for clickable cells */
+}
+
+/* Weekend Styles */
+.weekend {
+  background-color: #f4f4f4; /* Light grey background for weekend days */
+  color: #888888; /* Light grey text for weekends */
+}
+
+/* Disabled Cell */
+.disabled {
+  cursor: not-allowed; /* Change cursor to indicate non-interactivity */
+  opacity: 0.5; /* Make it less visible to show it's disabled */
+}
+
+/* Header Text Adjustment */
+h6 {
+  margin: 0; /* Ensure there's no default margin */
+}
+/* Button Styles */
+.btn-primary {
+  background-color: #0056b3; /* Slightly darker blue */
+  color: white; /* White text for contrast */
+}
+
+.btn-success {
+  background-color: #28a745; /* Standard success green */
+  color: white; /* White text for contrast */
+}
+
+
+/* Today Header Styling */
+.today-header {
+  background-color: #38a0f5 !important; /* Dark blue for current day */
+  font-weight: bold;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add bottom shadow */
+}
+
+/* General Table Header Styling */
+.table th {
+  background-color: #f8f9fa; /* Light background for headers */
+  color: #212529; /* Dark text for headers */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Light shadow for all headers */
+  border-bottom: 2px solid #dee2e6; /* Solid bottom border */
+}
+
+/* Proposal Dot Styling */
+.day {
+  position: relative; /* Ensure dot is positioned inside the day cell */
+}
+
+.proposal-dot {
+  display: inline-block;
+  width: 10px; /* Adjust size */
+  height: 10px; /* Adjust size */
+  background-color: #ff5252; /* Red for proposal dots */
+  border-radius: 50%; /* Makes it round */
+  margin: 0 auto; /* Center align */
+}
+
+/* Bottom bar adjustment */
+.bottom-bar {
+  height: 65px; /* Adjust height as needed */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Slight shadow for separation */
+}

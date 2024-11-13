@@ -1,0 +1,204 @@
+<div class="container">
+  <div class="d-flex align-items-center flex-wrap justify-content-between mb-3">
+    <!-- Employee List Component -->
+    <app-employees-list
+      class="employees-list me-4 d-none d-md-flex"
+      (employeesEvent)="handleEmployees($event)"
+      (respoEvent)="getRespoId($event)"
+      (workingsDaysEvent)="getWorkingDays($event)"
+      (getproposalDayEvent)="getproposalDay($event)"
+    ></app-employees-list>
+
+    <!-- Navigation buttons -->
+    <div class="d-flex align-items-center d-none d-md-flex navigation-buttons">
+      <button
+        class="btn btn-outline-primary me-2"
+        (click)="prevMonth()"
+        title="Previous Month"
+      >
+        &lt; Previous
+      </button>
+      <span class="month-year me-3">{{ monthYearLabel }}</span>
+      <button class="btn btn-outline-primary me-2" (click)="nextMonth()">
+        Next &gt;
+      </button>
+      <button class="btn btn-outline-secondary" (click)="resetToCurrentDate()">
+        Today
+      </button>
+    </div>
+  </div>
+
+  <!-- Desktop Table View -->
+  <div class="table-wrapper d-none d-md-block">
+    <div class="table-responsive desktop-table-view">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light">
+          <tr>
+            <th
+              style="position: sticky; left: 0; background: white; z-index: 3; width: 200px"
+            ></th>
+            <th
+              *ngFor="let day of daysInMonth"
+              [ngClass]="{ weekend: day.isWeekend, 'today-header': isToday(day.date) }"
+              style="
+                position: sticky;
+                top: 0;
+                background: white;
+                z-index: 1;
+                text-align: center;
+                min-width: 100px; /* Ensure a minimum width for each day */
+              "
+            >
+              {{ day.date.format("DD") }}<br />{{ day.date.format("ddd") }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees">
+            <td
+              style="position: sticky; left: 0; background: white; z-index: 2; width: 200px"
+            >
+              <div class="employee-info">
+                <span class="fw-bold d-block">{{ employee.fullname }}</span>
+                <span class="small text-muted d-block"
+                  >(CIN: {{ employee.cin }})</span
+                >
+              </div>
+            </td>
+            <td
+              *ngFor="let day of daysInMonth"
+                
+              class="day-cell"
+              [ngClass]="{
+                'working-day': isChoosingDay(employee.id, day.date) ,  weekend: day.isWeekend,
+              }"
+              (click)="
+                !day.isWeekend ? toggleShift(employee.id, day.date) : null
+              "
+              style="min-width: 100px; cursor: pointer;"  
+            >
+              <span
+                *ngIf="isProposelDay(employee.id, day.date)"
+                class="proposal-dot"
+              ></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  <!-- Mobile Table View -->
+  <div class="d-md-none mb-3">
+    <app-employees-list
+      class="me-4"
+      (employeesEvent)="handleEmployees($event)"
+    ></app-employees-list>
+    <div class="d-flex align-items-center navigation-buttons">
+      <button
+        class="btn btn-outline-primary me-3"
+        (click)="prevWeek()"
+        title="Previous Week"
+      >
+        &lt;
+      </button>
+      <span>{{ weekLabel }}</span>
+      <button class="btn btn-outline-primary ms-3" (click)="nextWeek()">
+        &gt;
+      </button>
+      <button
+        class="btn btn-outline-secondary mx-3"
+        (click)="resetToCurrentDate()"
+      >
+        Today
+      </button>
+    </div>
+  </div>
+
+  <div class="table-responsive d-md-none mobile-table-view">
+    <table class="table table-bordered table-hover">
+      <thead class="table-light">
+        <tr>
+          <th style="
+          position: sticky;
+          top: 0;
+          background: white;
+          z-index: 1;
+          text-align: center;
+          width: calc(100% / 7); /* Use calc to ensure equal width */
+        ">
+            Employees
+          </th>
+          <th
+            *ngFor="let day of daysInWeek"
+            [ngClass]="{
+              weekend: day.isWeekend,
+              'today-header': isToday(day.date)
+            }"
+            style="
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+            text-align: center;
+            width: calc(100% / 7); /* Use calc to ensure equal width */
+          "
+          >
+            {{ day.date.format("ddd") }}<br />{{ day.date.format("DD") }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let employee of employees">
+          <td style="position: sticky; left: 0; background: white; z-index: 1">
+            <div class="employee-info flex">
+              <span class="fw-bold d-block">{{ employee.fullname }}</span>
+              <span class="small text-muted d-block"
+                >(CIN: {{ employee.cin }})</span
+              >
+            </div>
+          </td>
+          <td
+            *ngFor="let day of daysInWeek"
+            class="day-cell"
+            [ngClass]="{ 'working-day': isChoosingDay(employee.id, day.date) }"
+            (click)="!day.isWeekend ? toggleShift(employee.id, day.date) : null"
+          >
+            <span
+              *ngIf="isProposelDay(employee.id, day.date)"
+              class="proposal-dot"
+            ></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Fixed Bottom Bar -->
+  <div class="fixed-bottom d-flex justify-content-end bg-light p-3 bottom-bar">
+    <button
+      class="btn btn-primary me-2"
+      (click)="showProposalFunc()"
+      [ngClass]="{ 'btn-success': showProposal }"
+    >
+      {{ role !== "leader" ? "Show Proposal" : "Proposal Mode" }}
+    </button>
+    <button
+      class="btn btn-danger me-2"
+      (click)="emptySavePlans()"
+      *ngIf="planChanges.length > 0"
+    >
+      Discard changes
+    </button>
+    <button
+      class="btn btn-primary"
+      [disabled]="planChanges.length === 0"
+      (click)="savePlans()"
+      *ngIf="role !== 'leader' || (role === 'leader' && showProposal)"
+    >
+      Save Plans
+    </button>
+  </div>
+</div>
+<app-toast></app-toast>

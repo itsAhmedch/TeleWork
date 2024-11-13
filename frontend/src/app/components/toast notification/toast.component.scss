@@ -1,0 +1,30 @@
+/* src/app/components/toast/toast.component.scss */
+:host {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1050;
+  width: 100%;
+  max-width: 300px; /* Default max width for larger screens */
+}
+
+/* Adjust toast container on medium to large screens */
+@media (min-width: 768px) {
+  :host {
+    max-width: 400px;
+  }
+}
+
+/* Adjust toast container for small screens */
+@media (max-width: 576px) {
+  :host {
+    left: 0.5rem;  /* Less padding on the left */
+    right: 0.5rem; /* Allow toasts to occupy more space */
+    bottom: 0.5rem;
+    max-width: 90%;
+  }
+
+  .toast {
+    margin: 0.5rem auto; /* Center the toasts for small screens */
+  }
+}
