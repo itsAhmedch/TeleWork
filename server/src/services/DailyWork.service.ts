@@ -9,7 +9,7 @@ import { DailyWork } from 'src/entities/DailyWork.entity';
 import { CreateDailyWorkDto } from 'src/dto/DailyWork.dto';
 import { User } from 'src/entities/user.entity';
 import { PlanService } from './Plan.service';
-import { log } from 'console';
+
 
 @Injectable()
 export class DailyWorkService {
@@ -77,6 +77,8 @@ export class DailyWorkService {
       const isTodayWorkingDay = listOfWorkingDays.some(
         (day) => day.date === formattedToday,
       );
+    
+      
 
       return isTodayWorkingDay; // Returns true if today is a working day, false otherwise
     } catch (error) {
@@ -109,26 +111,35 @@ export class DailyWorkService {
       select: ['id', 'workStatus', 'date', 'time'], // Select necessary fields including id
     });
 
-    // Check if lastDailyWork is null
-    if (!lastDailyWork) {
-      // Handle the case where no daily work is found
-      return {
-        date: null,
-        time: null,
-        status: null,
-        currentDate: new Date(),
-        message: 'No daily work found for this user.',
-      };
-    }
+  
 
     const MyInfo = {
-      date: lastDailyWork.date,
-      time: lastDailyWork.time,
-      status: lastDailyWork.workStatus,
-      currentDate: new Date(),
+      time: this.get_Time(),
+      status: lastDailyWork?lastDailyWork.workStatus:true,
+      lastClickTime: lastDailyWork?lastDailyWork.time:'',
+      currentDate: this.get_Day(),
+      isworkingDay: await this.checkIfTodayIsWorkingDay(user.id)
     };
-
+    console.log(MyInfo);
+    
     return MyInfo;
+  }
+
+  get_Time(){
+    const date = new Date();
+    const offset = date.getTimezoneOffset() / 60;  // Get the offset in hours
+    date.setHours(date.getHours() - offset);
+
+    return  date.toISOString().split('T')[1].slice(0, 5);
+  }
+  
+  get_Day(){
+    const date = new Date();
+    const offset = date.getTimezoneOffset() / 60;  // Get the offset in hours
+    date.setHours(date.getHours() - offset);
+
+    return  date.toISOString().split('T')[0];
+  
   }
 
   calculDuration(DailyWork) {

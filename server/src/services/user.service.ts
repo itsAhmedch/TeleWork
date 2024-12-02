@@ -121,7 +121,7 @@ export class UserService {
       where: { id: In(userIds) }, // Only get users that are in the userIds
       skip: (page - 1) * limit,
       take: limit,
-      select: ['id', 'cin', 'email', 'name', 'lastName', 'role', 'team'],
+      select: ['id', 'mat', 'email', 'name', 'lastName', 'role', 'team'],
       relations: ['team', 'team.parentTeam'], // Specify the relation to be included
     };
 
@@ -131,7 +131,7 @@ export class UserService {
         { id: In(userIds), email: Like(`%${search}%`) },
         { id: In(userIds), name: Like(`%${search}%`) },
         { id: In(userIds), lastName: Like(`%${search}%`) },
-        { id: In(userIds), cin: Like(`%${search}%`) },
+        { id: In(userIds), mat: Like(`%${search}%`) },
         { id: In(userIds), team: { name: Like(`%${search}%`) } },
         { id: In(userIds), role: Like(`%${search}%`) },
         {
@@ -147,7 +147,7 @@ export class UserService {
     // Map the result to ensure a clear format
     const result = users.map((user) => ({
       id: user.id,
-      cin: user.cin,
+      mat: user.mat,
       email: user.email,
       name: user.name,
       lastName: user.lastName,
@@ -213,7 +213,7 @@ export class UserService {
             result.push({
               id: user.id,
               fullname: `${user.name} ${user.lastName}`,
-              cin: user.cin,
+              mat: user.mat,
             });
           }
         }
@@ -233,7 +233,7 @@ export class UserService {
       result.push({
         id: user.id,
         fullname: `${user.name} ${user.lastName}`,
-        cin: user.cin,
+        mat: user.mat,
       });
     }
 
@@ -254,7 +254,7 @@ export class UserService {
       result.push({
         id: user.id,
         fullname: `${user.name} ${user.lastName}`,
-        cin: user.cin,
+        mat: user.mat,
       });
     }
 
@@ -275,7 +275,7 @@ export class UserService {
       result.push({
         id: user.id,
         fullname: `${user.name} ${user.lastName}`,
-        cin: user.cin,
+        mat: user.mat,
       });
     }
 

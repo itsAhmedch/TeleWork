@@ -14,8 +14,8 @@ import { Repository } from 'typeorm';
 
 class createAdminDto {
   @IsNotEmpty()
-  @Matches(/^\d{8}$/, { message: 'CIN must be exactly 8 digits' })
-  cin: string;
+  @Matches(/^\d{8}$/, { message: 'mat must be exactly 8 digits' })
+  mat: string;
 
   @IsNotEmpty()
   @IsEmail()
@@ -47,7 +47,7 @@ export class CreateAdminController {
 
   // For Postman :
   //  {
-  // "cin": "10000022",
+  // "mat": "10000022",
   //   "email": "admin1@admin.com",
   //   "name": "admin",
   //   "lastName": "admin",
@@ -57,10 +57,10 @@ export class CreateAdminController {
   @Post()
   async createAdmin(@Body() createAdminDto: createAdminDto) {
     const user = await this.userRepository.findOneBy({
-      cin: createAdminDto.cin,
+      mat: createAdminDto.mat,
     });
     if (user) {
-      throw new NotFoundException(`cin already exists`);
+      throw new NotFoundException(`mat already exists`);
     } else {
       const user = await this.userRepository.findOneBy({
         email: createAdminDto.email,

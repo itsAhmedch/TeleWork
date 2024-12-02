@@ -59,7 +59,7 @@ export class ModalComponent implements OnInit {
           '^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-zA-Z0-9]).{8,}$'
         ),
       ]),
-      cin: new FormControl('', [
+      mat: new FormControl('', [
         Validators.required,
         Validators.pattern('^[0-9]{8}$'),
       ]),
@@ -179,7 +179,7 @@ export class ModalComponent implements OnInit {
           },
           (error) => {
             this.ErrorMsg = error;
-            // console.log(error.error,"fgfdgfd");
+      
           }
         );
       } else {
@@ -326,9 +326,9 @@ export class ModalComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.toastService.showToast(isSubTeam?'SubTeam added successfully':'Team added successfully',true)
         this.toastService.showToast(isSubTeam?'Error adding Subteam':'Error adding Team',false)
         console.error('Error adding team:', err);
+        this.ErrorMsg=err.error.message
         // Handle error
       },
     });

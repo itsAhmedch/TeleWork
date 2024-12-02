@@ -1,4 +1,5 @@
 <div class="container">
+  
   <div class="d-flex align-items-center flex-wrap justify-content-between mb-3">
     <!-- Employee List Component -->
     <app-employees-list
@@ -61,7 +62,7 @@
               <div class="employee-info">
                 <span class="fw-bold d-block">{{ employee.fullname }}</span>
                 <span class="small text-muted d-block"
-                  >(CIN: {{ employee.cin }})</span
+                  >(MAT: {{ employee.mat }})</span
                 >
               </div>
             </td>
@@ -155,7 +156,7 @@
             <div class="employee-info flex">
               <span class="fw-bold d-block">{{ employee.fullname }}</span>
               <span class="small text-muted d-block"
-                >(CIN: {{ employee.cin }})</span
+                >(MAT: {{ employee.mat }})</span
               >
             </div>
           </td>
@@ -178,15 +179,25 @@
   <!-- Fixed Bottom Bar -->
   <div class="fixed-bottom d-flex justify-content-end bg-light p-3 bottom-bar">
     <button
+    *ngIf="showProposal && (role === 'admin' || role === 'respo')"
+    class="btn btn-outline-primary me-2"
+    (click)="selectProposalOnes()"
+    [ngClass]="{ 'btn-outline': showProposal }"
+  >
+    All Proposal
+  </button>
+  
+    <button
       class="btn btn-primary me-2"
       (click)="showProposalFunc()"
       [ngClass]="{ 'btn-success': showProposal }"
     >
       {{ role !== "leader" ? "Show Proposal" : "Proposal Mode" }}
     </button>
+    
     <button
       class="btn btn-danger me-2"
-      (click)="emptySavePlans()"
+      (click)="emptyPlans()"
       *ngIf="planChanges.length > 0"
     >
       Discard changes
@@ -200,5 +211,7 @@
       Save Plans
     </button>
   </div>
+
+  
 </div>
 <app-toast></app-toast>

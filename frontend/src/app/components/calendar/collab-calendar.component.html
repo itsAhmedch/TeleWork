@@ -103,31 +103,11 @@
         >
       </div>
       <div class="right-side">
-        <button
-          *ngIf="isTodayWorkday()"
-          [ngClass]="{ button: !MyStatus, takeBreak: MyStatus }"
-          (click)="sendWorkStatus()"
-        >
-          {{ !MyStatus ? "Start Now" : "Take break" }}
-        </button>
+       
       </div>
     </footer>
 
-    <!-- Modal Overlay -->
-    <div *ngIf="showCaptcha" class="modal-overlay" (click)="closeCaptcha()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3 class="modal-title">Please verify that you are human</h3>
-        <div class="captcha-container">
-          <re-captcha
-            (resolved)="onCaptchaResolved($event)"
-            [siteKey]="siteKey"
-          ></re-captcha>
-        </div>
-        <button type="button" class="modal-close" (click)="closeCaptcha()">
-          Close
-        </button>
-      </div>
-    </div>
+ 
   </div>
   <div class="wraper2">
     <div class="header-calendar-container">
@@ -151,4 +131,26 @@
       </div>
     </div>
   </div>
+
 </div>
+
+<div class="calendar-legend mt-4">
+ 
+  <div class="d-flex align-items-center flex-wrap">
+    <div class="legend-item d-flex align-items-center me-4 mb-2">
+      <span class="legend-color" style="background: linear-gradient(135deg, #48f35b, #019125)"></span>
+      <span class="ms-2">Previous Working Days</span>
+    </div>
+    <div class="legend-item d-flex align-items-center me-4 mb-2">
+      <span class="legend-color" style="background: linear-gradient(135deg, #f4d03f, #f39c12);"></span>
+      <span class="ms-2">Today</span>
+    </div>
+    <div class="legend-item d-flex align-items-center me-4 mb-2">
+      <span class="legend-color" style="background: linear-gradient(135deg, #00eeff, #046bb5);"></span>
+      <span class="ms-2">Future Working Days</span>
+    </div>
+    <div class="legend-item d-flex align-items-center me-4 mb-2">
+      <span class="legend-color" style="background-color: rgb(248, 33 ,33 ,0.71);"></span>
+      <span class="ms-2">Proposal Days</span>
+    </div>
+  </div>

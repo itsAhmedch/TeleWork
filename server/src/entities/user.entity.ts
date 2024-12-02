@@ -30,7 +30,7 @@ export class User {
 
 
   @Column({ type: 'varchar', length: 8, unique: true})
-  cin: string ;
+  mat: string ;
 
 
   @Column({ type: 'enum', enum:Role })

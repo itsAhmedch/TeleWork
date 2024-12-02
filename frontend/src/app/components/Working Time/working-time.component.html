@@ -1,0 +1,39 @@
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="text-center p-4 shadow rounded bg-white w-100" style="max-width: 800px;">
+    <!-- Display server time -->
+    <div class="mb-3">
+      <h6 class="text-muted">{{ serverDay }} <a class="m-3">{{ServerTime}}</a></h6>
+    </div>
+
+    <!-- ReCaptcha centered -->
+    <div *ngIf="isworkingDay" class="mb-4 d-flex justify-content-center">
+      <re-captcha
+        [siteKey]="siteKey"
+        (resolved)="onCaptchaResolved($event)"
+        class="captcha-center"
+      ></re-captcha>
+    </div>
+
+    <!-- Display lastClickDuration and button -->
+    <div class="d-flex justify-content-center align-items-center flex-wrap">
+      <div class="me-3 mb-2 mb-sm-0">{{ lastClickDuration }}</div>
+      <button
+        *ngIf="isworkingDay"
+        type="submit"
+        class="btn btn-lg"
+        [ngClass]="{
+          'btn-primary': workStatus,
+          'btn-danger': !workStatus
+        }"
+        [disabled]="!captchaResolved"
+        (click)="onSubmit()"
+      >
+        {{ workStatus ? 'start working' : 'stop working' }}
+      </button>
+      <div *ngIf="!isworkingDay" class="mt-3 text-danger fw-bold">
+        You don't have Telework today
+      </div>
+    </div>
+  </div>
+</div>
+<app-toast></app-toast>

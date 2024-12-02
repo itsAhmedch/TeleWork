@@ -12,7 +12,7 @@ export class TableComponent {
   @Input() tableHeaders: string[] = [];
   @Input() tableData: {
     id: number;
-    cin: number;
+    mat: number;
     name: string;
     lastName: string;
     email: string;

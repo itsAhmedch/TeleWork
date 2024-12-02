@@ -15,24 +15,24 @@
         <div class="form-outline" data-mdb-input-init *ngIf="!editMode">
           <input
             type="text"
-            id="typeCin"
+            id="typemat"
             class="form-control"
-            formControlName="cin"
+            formControlName="mat"
           />
-          <label class="form-label" for="typeCin">CIN</label>
+          <label class="form-label" for="typemat">MAT<span style="color: red;">*</span></label>
           <!-- Error messages -->
           <div
-            *ngIf="userForm.get('cin')?.invalid && userForm.get('cin')?.touched"
+            *ngIf="userForm.get('mat')?.invalid && userForm.get('mat')?.touched"
             class="text-danger"
           >
             <!-- Required error -->
-            <small *ngIf="userForm.get('cin')?.errors?.['required']"
-              >CIN is required.</small
+            <small *ngIf="userForm.get('mat')?.errors?.['required']"
+              >MAT is required.</small
             >
 
             <!-- Pattern error (only numeric and exactly 8 characters) -->
-            <small *ngIf="userForm.get('cin')?.errors?.['pattern']"
-              >CIN must be 8 numeric characters.</small
+            <small *ngIf="userForm.get('mat')?.errors?.['pattern']"
+              >MAT must be 8 numeric characters.</small
             >
           </div>
         </div>
@@ -45,7 +45,7 @@
             formControlName="name"
           />
           <label class="form-label" for="typeName" *ngIf="!editMode"
-            >Name</label
+            >Name <span style="color: red;">*</span></label
           >
         </div>
 
@@ -57,7 +57,7 @@
             formControlName="lastName"
           />
           <label class="form-label" for="typeLastName" *ngIf="!editMode"
-            >Last Name</label
+            >Last Name<span style="color: red;">*</span></label
           >
         </div>
 
@@ -68,7 +68,7 @@
             class="form-control"
             formControlName="email"
           />
-          <label class="form-label" for="typeEmail">Email </label>
+          <label class="form-label" for="typeEmail">Email <span style="color: red;">*</span></label>
           <div
             *ngIf="
               userForm.get('email')?.invalid && userForm.get('email')?.touched
@@ -87,7 +87,7 @@
 
         <div class="form-outline" data-mdb-input-init>
           <input type="password" class="form-control" formControlName="pwd" />
-          <label class="form-label" for="pwd">password </label>
+          <label class="form-label" for="pwd">password <span style="color: red;">*</span></label>
           <div
             *ngIf="userForm.get('pwd')?.invalid && userForm.get('pwd')?.touched"
             class="error-message"
@@ -110,7 +110,7 @@
 
 
         <div class="form-group mb-3"  >
-          <label for="roleSelect">Select Role</label>
+          <label for="roleSelect">Select Role<span style="color: red;">*</span></label>
           <select formControlName="role" id="roleSelect" class="form-control">
          
             <option>collab</option>
@@ -120,7 +120,7 @@
         </div>
 
         <div  class="form-group" *ngIf="userForm.get('role')?.value != 'respo' &&!editMode && role == 'admin'">
-          <label for="teamSelect">Select responsible</label>
+          <label for="teamSelect">Select responsible <span style="color: red;">*</span></label>
           <div class="d-flex align-items-center">
         
 
@@ -143,7 +143,7 @@
         </div>
 
         <div class="form-group" *ngIf="userForm.get('role')?.value != 'respo' && !editMode">
-          <label for="teamSelect">Select Team</label>
+          <label for="teamSelect">Select Team<span style="color: red;">*</span></label>
           <div class="d-flex align-items-center">
             <input
               type="text"
@@ -168,7 +168,7 @@
 
             <button
               *ngIf="!showTeamField"
-              [disabled]="userForm.get('idresponsible')?.value == ''"
+              [disabled]="userForm.get('idresponsible')?.value == '' && role=='admin'"
               type="button"
               class="btn btn-primary btn-sm ms-2"
               (click)="changeTeamMode()"

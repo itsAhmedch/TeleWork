@@ -8,8 +8,8 @@ export class CreateUserDto {
   role: string;
 
   @IsNotEmpty()
-  @Matches(/^\d{8}$/, { message: 'CIN must be exactly 8 digits' })
-  cin: string;
+  @Matches(/^\d{8}$/, { message: 'mat must be exactly 8 digits' })
+  mat: string;
 
   @IsNotEmpty()
   @IsEmail()
@@ -39,5 +39,5 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto extends PartialType(
-  OmitType(CreateUserDto, ['email', 'cin'] as const)
+  OmitType(CreateUserDto, ['email', 'mat'] as const)
 ) {}

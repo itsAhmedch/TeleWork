@@ -3,7 +3,7 @@ import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/cor
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { Subject } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import {  takeUntil } from 'rxjs/operators';
 import { UserService } from '../../../services/user.service';
 import { TeamsService } from '../../../services/team.service';
 import { planService } from '../../../services/plan.service';

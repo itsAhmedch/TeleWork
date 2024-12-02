@@ -71,6 +71,17 @@ export class TeamController {
       }
     }
 
+    const team = await this.teamRepository.findOne({
+      where: { responsable: { id:  idRespo} , name:teamData.name }, 
+      relations: ['responsable'],
+    });
+
+    if (team) {
+      throw new NotFoundException(
+        `Team is already exist`,
+      );
+    }
+
     // Find parent team if provided
     let parentTeam: Team | null = null;
     if (idTeam) {

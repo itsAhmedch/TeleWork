@@ -13,6 +13,12 @@ export  const Constants = {
       role: ['collab', 'leader'],
     },
     {
+      route: '/dashboard/working-Time',
+      label: ' working Time',
+      icon: 'fa fa-calendar-check',
+      role: ['collab', 'leader'],
+    },
+    {
       route: '/dashboard/planning',
       label: ' planning',
       icon: 'fa fa-calendar-alt',

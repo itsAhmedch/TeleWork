@@ -3,7 +3,7 @@
     <h2>Download Team Plan</h2>
 
     <div class="me-3" *ngIf="role === 'admin'">
-      <label>Responsible:</label>
+      <label>Responsible:<span style="color: red;">*</span></label>
       <select
         formControlName="responsible"
         class="form-select"
@@ -47,7 +47,7 @@
     </div>
 
     <div class="me-3">
-      <label>Choose:</label>
+      <label>Choose:<span style="color: red;">*</span></label>
       <select class="form-select" formControlName="choice">
         <option value="plan">Planification</option>
         <option value="times">Pointage</option>
@@ -55,7 +55,7 @@
     </div>
 
     <div class="form-group">
-      <label for="startDate">Start Date:</label>
+      <label for="startDate">Start Date:<span style="color: red;">*</span></label>
       <input
         type="date"
         id="startDate"
@@ -66,7 +66,7 @@
     </div>
 
     <div class="form-group">
-      <label for="endDate">End Date:</label>
+      <label for="endDate">End Date:<span style="color: red;">*</span></label>
       <input
         type="date"
         id="endDate"

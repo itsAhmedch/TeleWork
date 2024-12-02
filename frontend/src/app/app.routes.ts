@@ -7,6 +7,7 @@ import { ExtractPageComponent } from './pages/extract-page/extract-page.componen
 import { UploadPageComponent } from './pages/upload-page/upload-page.component';
 import { UsersPageComponent } from './pages/users-page/users-page.component';
 import { PlanningPageComponent } from './pages/planning-page/planning-page.component';
+import { WorkingTimePage } from './pages/working-Time-page/working-time-page.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,6 +19,7 @@ export const routes: Routes = [
       { path: 'users', component: UsersPageComponent },
       { path: 'planning', component: PlanningPageComponent },
       { path: 'calendar', component: CalendarPageComponent },
+      { path: 'working-Time', component: WorkingTimePage },
       { path: 'extract', component: ExtractPageComponent },
       { path: 'upload', component: UploadPageComponent },
       

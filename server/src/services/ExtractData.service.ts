@@ -49,7 +49,7 @@ export class ExtractDataService {
         where: {
           team: { id: In(teamIds) }, // Filter collabs by team IDs
         },
-        select: ['id', 'name', 'lastName', 'cin'], // Select collab details
+        select: ['id', 'name', 'lastName', 'mat'], // Select collab details
       });
 
       // Fetch plans for the selected teams and date range
@@ -131,7 +131,7 @@ export class ExtractDataService {
 
     // Set up the worksheet headers
     worksheet.columns = [
-      { header: 'CIN', width: 15 },
+      { header: 'mat', width: 15 },
       { header: 'Name', width: 20 },
       ...dayNames.map((date) => ({ header: date, width: 15 })),
     ];
@@ -160,25 +160,25 @@ export class ExtractDataService {
     const collabMap = new Map();
 
     plans.forEach((plan) => {
-      const { cin, name, lastName } = plan; // Destructure directly from plan
+      const { mat, name, lastName } = plan; // Destructure directly from plan
       const userPlans = plan.plans; // Assuming plans is an array within each user
 
       // Ensure we only add a collab once and group their dates
-      if (!collabMap.has(cin)) {
-        collabMap.set(cin, { cin, name, lastName, dates: new Set() });
+      if (!collabMap.has(mat)) {
+        collabMap.set(mat, { mat, name, lastName, dates: new Set() });
       }
 
       // If plans exist, iterate over them to add the dates
       userPlans.forEach((userPlan) => {
         const planDate = userPlan.date; // Assuming each plan has a date
-        collabMap.get(cin).dates.add(planDate);
+        collabMap.get(mat).dates.add(planDate);
       });
     });
 
     // Populate the worksheet with user data and their respective plans
     collabMap.forEach((collab) => {
       const rowData = [
-        collab.cin,
+        collab.mat,
         `${collab.name} ${collab.lastName}`,
         ...planDates2.map((date) => (collab.dates.has(date) ? 'X' : '')),
       ];
@@ -249,7 +249,7 @@ export class ExtractDataService {
         where: {
           team: { id: In(teamIds) }, // Filter collabs by team IDs
         },
-        select: ['id', 'name', 'lastName', 'cin'],
+        select: ['id', 'name', 'lastName', 'mat'],
       });
 
       const dailyWorks = await this.dailyWorkRepository.find({
@@ -326,7 +326,7 @@ export class ExtractDataService {
 
     // Set up the worksheet headers
     worksheet.columns = [
-      { header: 'CIN', width: 15 },
+      { header: 'MAT', width: 15 },
       { header: 'Name', width: 20 },
       ...dayNames.map((date) => ({ header: date, width: 25 })), // Increased width for time display
     ];
@@ -356,12 +356,12 @@ export class ExtractDataService {
 
     // Process and add the plan data to the worksheet
     plans.forEach((plan) => {
-      const { cin, name, lastName } = plan; // Destructure directly from plan
+      const { mat, name, lastName } = plan; // Destructure directly from plan
       const userPlans = plan.dailyWorks; // Assuming plans is an array within each user
 
       // Ensure we only add a collab once and group their times
-      if (!collabMap.has(cin)) {
-        collabMap.set(cin, { cin, name, lastName, timesByDate: new Map() });
+      if (!collabMap.has(mat)) {
+        collabMap.set(mat, { mat, name, lastName, timesByDate: new Map() });
       }
 
       // If plans exist, iterate over them to add the times for each date
@@ -376,19 +376,19 @@ export class ExtractDataService {
           : `break: ${timeData}`; // Work status is false -> break time
 
         // If this date hasn't been added for the collab yet, initialize it
-        if (!collabMap.get(cin).timesByDate.has(planDate)) {
-          collabMap.get(cin).timesByDate.set(planDate, []);
+        if (!collabMap.get(mat).timesByDate.has(planDate)) {
+          collabMap.get(mat).timesByDate.set(planDate, []);
         }
 
         // Add the time to the corresponding date
-        collabMap.get(cin).timesByDate.get(planDate).push(time);
+        collabMap.get(mat).timesByDate.get(planDate).push(time);
       });
     });
 
     // Populate the worksheet with user data and their respective times
     collabMap.forEach((collab) => {
       const rowData = [
-        collab.cin,
+        collab.mat,
         `${collab.name} ${collab.lastName}`,
         ...planDates2.map((date) => {
           const times = collab.timesByDate.get(date) || [];

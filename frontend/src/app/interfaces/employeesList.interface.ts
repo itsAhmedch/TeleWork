@@ -2,7 +2,7 @@
 export  interface Employee {
     id: number;
     fullname: string;
-    cin: number;
+    mat: number;
   }
   
 export   interface Responsible {

@@ -133,7 +133,10 @@ export class ExtractDataComponent implements OnInit {
       (data) => {
         this.subTeams = data;
       },
-      (error) => console.error(error)
+      (error) =>{ 
+        console.error(error)
+        this.subTeams = [];
+      }
     );
   }
 

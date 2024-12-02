@@ -41,10 +41,10 @@ export class UserController {
   async create(@Body() createUserDto: CreateUserDto) {
 
     const user = await this.userRepository.findOneBy({
-      cin: createUserDto.cin,
+      mat: createUserDto.mat,
     });
     if (user) {
-      throw new NotFoundException(`cin already exists`);
+      throw new NotFoundException(`mat already exists`);
     } else {
       const user = await this.userRepository.findOneBy({
         email: createUserDto.email,

@@ -65,7 +65,7 @@ export class UsersComponent {
       if (response && response.users) {
         this.tableData = response.users.map((user: any, index: number) => ({
           id: user.id,
-          cin: user.cin,
+          mat: user.mat,
           name: `${user.name}`,
           lastName: `${user.lastName}`,
           email: user.email,
@@ -109,7 +109,7 @@ export class UsersComponent {
     modalRef.onClose.subscribe((result) => {
       if (result == 'edit') {
         this.toastService.showToast(
-          `user with cin: ${userData.cin}  modified successfully`,
+          `user with mat: ${userData.mat}  modified successfully`,
           true
         );
         this.searchUsers(this.GSearch);
