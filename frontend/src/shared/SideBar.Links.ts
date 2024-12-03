@@ -14,10 +14,11 @@ export  const Constants = {
     },
     {
       route: '/dashboard/working-Time',
-      label: ' working Time',
-      icon: 'fa fa-calendar-check',
+      label: '  working Time',
+      icon: 'fa fas fa-clock',
       role: ['collab', 'leader'],
     },
+
     {
       route: '/dashboard/planning',
       label: ' planning',
