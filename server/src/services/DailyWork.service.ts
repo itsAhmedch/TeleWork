@@ -120,7 +120,7 @@ export class DailyWorkService {
       currentDate: this.get_Day(),
       isworkingDay: await this.checkIfTodayIsWorkingDay(user.id)
     };
-    console.log(MyInfo);
+   
     
     return MyInfo;
   }
